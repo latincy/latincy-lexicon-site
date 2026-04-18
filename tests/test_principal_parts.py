@@ -62,6 +62,28 @@ def test_verb_missing_supine_gives_three_parts():
     assert result.count(",") == 2  # three parts
 
 
+def test_verb_amo_whitaker_syncopated_perfect_reconstructed_to_standard():
+    """Whitaker stores amo's perfect stem as the syncopated 'amass' and
+    has no supine. Reconstruct the standard classical 4 parts.
+    """
+    entry = {
+        "pos": "V",
+        "headword": "amo",
+        "principal_parts": ["am", "am", "amass"],
+    }
+    assert format_principal_parts(entry) == "amo, amare, amavi, amatum"
+
+
+def test_verb_first_conj_synthesizes_supine_when_missing():
+    """1st conj with perfect in -av but no supine → regular -atum supine."""
+    entry = {
+        "pos": "V",
+        "headword": "porto",
+        "principal_parts": ["port", "port", "portav"],
+    }
+    assert format_principal_parts(entry) == "porto, portare, portavi, portatum"
+
+
 def test_verb_no_stems_returns_none():
     entry = {"pos": "V", "headword": "foo", "principal_parts": []}
     assert format_principal_parts(entry) is None

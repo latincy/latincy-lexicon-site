@@ -6,6 +6,7 @@ from pathlib import Path
 
 from fastapi.templating import Jinja2Templates
 
+from .pos_labels import pos_label
 from .principal_parts import format_principal_parts
 from .ww_codes import ww_age, ww_area, ww_freq, ww_geo, ww_source
 
@@ -18,3 +19,4 @@ templates.env.filters["ww_area"] = ww_area
 templates.env.filters["ww_geo"] = ww_geo
 templates.env.filters["ww_source"] = ww_source
 templates.env.filters["principal_parts"] = format_principal_parts
+templates.env.filters["pos_label"] = pos_label

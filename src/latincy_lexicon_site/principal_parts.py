@@ -36,46 +36,57 @@ def format_principal_parts(entry: dict) -> str | None:
 
 
 def _format_verb(hw: str, stems: list[str]) -> str | None:
-    parts = [hw]
-    inf = _infinitive(hw, stems)
-    if inf is None:
+    conj = _detect_conj(hw, stems)
+    if conj is None:
         return None
-    parts.append(inf)
+    pres = stems[0]
+    parts = [hw]
 
-    # Perfect: stems[2] + 'i'
+    # 2nd pp: infinitive
+    if conj == 1:
+        parts.append(pres + "are")
+    elif conj == 2:
+        parts.append(hw[:-2] + "ere")
+    elif conj == 4:
+        parts.append(hw[:-2] + "ire")
+    else:  # 3
+        parts.append(pres + "ere")
+
+    # 3rd pp: perfect + 'i'
     if len(stems) >= 3 and stems[2]:
-        parts.append(stems[2] + "i")
+        perf = stems[2]
+        # Whitaker stores 1st conj perfect as syncopated '-ass-' (from
+        # amasse/amassem family). Rewrite back to the standard '-av-'.
+        if conj == 1 and perf.endswith("ass"):
+            perf = perf[:-3] + "av"
+        parts.append(perf + "i")
 
-    # Supine: stems[3] + 'um'
+    # 4th pp: supine + 'um' (or synthesize for regular 1st conj)
     if len(stems) >= 4 and stems[3]:
         parts.append(stems[3] + "um")
+    elif conj == 1:
+        # Regular 1st conj supine: pres-stem + 'atum' (amatum, portatum)
+        parts.append(pres + "atum")
 
     return ", ".join(parts)
 
 
-def _infinitive(hw: str, stems: list[str]) -> str | None:
-    """Reconstruct the infinitive (2nd principal part) from hw + stems.
-
-    Conj detection order:
-      1. ``-eo`` → 2nd conj → ``-ere`` (long e)
-      2. ``-io`` → 4th conj → ``-ire`` (we can't reliably split 3rd-io here)
-      3. ``-o`` + perfect stem has ``v``/``u``/``ss`` suffix vs present → 1st → ``-are``
-      4. ``-o`` → 3rd conj → ``-ere`` (short e)
+def _detect_conj(hw: str, stems: list[str]) -> int | None:
+    """Return 1, 2, 3, or 4 for the detected conjugation, or None if
+    the headword doesn't look like a verb first-person form.
     """
-    pres = stems[0] if stems else ""
     if hw.endswith("eo"):
-        # mon + ere → monere; hw minus 'o' gives us 'mone', then + 're'
-        return hw[:-2] + "ere"
+        return 2
     if hw.endswith("io"):
-        # audio → audire; capio → capere would be more accurate but
-        # we can't reliably tell 4th from 3rd-io here. Default to -ire.
-        return hw[:-2] + "ire"
+        # audio vs capio (3rd-io) can't be split reliably without class
+        # metadata. Default to 4th — most common and makes audire, etc.
+        return 4
     if hw.endswith("o"):
-        # 1st vs 3rd: look at perfect stem (stems[2]) if present
+        pres = stems[0] if stems else ""
         perf = stems[2] if len(stems) >= 3 else ""
         if perf and _is_first_conj_perfect(pres, perf):
-            return pres + "are"
-        return pres + "ere"
+            return 1
+        return 3
     return None
 
 
@@ -86,7 +97,7 @@ def _is_first_conj_perfect(pres: str, perf: str) -> bool:
     or lengthen the stem vowel.
     """
     if perf == pres:
-        return False  # 3rd conj default reduplication / vowel-length perfect
+        return False
     if perf.startswith(pres):
         suffix = perf[len(pres) :]
         return suffix in {"av", "ass", "at"}

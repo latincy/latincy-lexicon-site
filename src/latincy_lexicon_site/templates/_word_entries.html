@@ -3,7 +3,7 @@
 {% else %}
   {% for entry in result.analyses %}
     <article class="entry">
-      <h3>{{ entry.headword or entry.lemma or "?" }} <small>({{ entry.pos or "?" }})</small></h3>
+      <h3>{{ entry.headword or entry.lemma or "?" }} <small title="Whitaker POS: {{ entry.pos or "?" }}">({{ entry.pos | pos_label or "?" }})</small></h3>
       {% set pp = entry | principal_parts %}
       {% if pp %}
         <p><strong>Principal parts:</strong> {{ pp }}</p>
