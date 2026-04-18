@@ -22,7 +22,13 @@
           {% endif %}
         </ul>
       {% endif %}
-      {% if entry.age %}<p><small>Age: {{ entry.age }}</small></p>{% endif %}
+      <p class="entry-meta"><small>
+        {% if entry.age %}<span title="Whitaker code: {{ entry.age }}">Age: {{ entry.age | ww_age }}</span>{% endif %}
+        {% if entry.freq %}<span title="Whitaker code: {{ entry.freq }}"> · Freq: {{ entry.freq | ww_freq }}</span>{% endif %}
+        {% if entry.area %}<span title="Whitaker code: {{ entry.area }}"> · Area: {{ entry.area | ww_area }}</span>{% endif %}
+        {% if entry.geo %}<span title="Whitaker code: {{ entry.geo }}"> · Geo: {{ entry.geo | ww_geo }}</span>{% endif %}
+        {% if entry.source %}<span title="Whitaker code: {{ entry.source }}"> · Source: {{ entry.source | ww_source }}</span>{% endif %}
+      </small></p>
       {% if entry.lemma %}
         <p><a href="/paradigm/{{ entry.lemma }}?pos={{ entry.pos or '' }}">View full paradigm →</a></p>
       {% endif %}
