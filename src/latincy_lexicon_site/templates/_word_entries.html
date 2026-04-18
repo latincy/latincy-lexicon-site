@@ -4,8 +4,11 @@
   {% for entry in result.analyses %}
     <article class="entry">
       <h3>{{ entry.headword or entry.lemma or "?" }} <small>({{ entry.pos or "?" }})</small></h3>
-      {% if entry.principal_parts %}
-        <p><strong>Principal parts:</strong>
+      {% set pp = entry | principal_parts %}
+      {% if pp %}
+        <p><strong>Principal parts:</strong> {{ pp }}</p>
+      {% elif entry.principal_parts %}
+        <p><strong>Stems:</strong>
           {% if entry.principal_parts is iterable and entry.principal_parts is not string %}
             {{ entry.principal_parts | join(", ") }}
           {% else %}
