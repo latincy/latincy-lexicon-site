@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ result.form }} | LatinCy Lexicon{% endblock %}
+
+{% block content %}
+<h1>{{ result.form }}</h1>
+{% if result.normalized != result.form %}
+  <p><small>Normalized: <code>{{ result.normalized }}</code></small></p>
+{% endif %}
+{% include "_word_entries.html" %}
+{% endblock %}

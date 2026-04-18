@@ -1,0 +1,41 @@
+{% if not result.analyses %}
+  <p><em>No dictionary entries for <strong>{{ result.form }}</strong>.</em></p>
+{% else %}
+  {% for entry in result.analyses %}
+    <article class="entry">
+      <h3>{{ entry.headword or entry.lemma or "?" }} <small>({{ entry.pos or "?" }})</small></h3>
+      {% if entry.principal_parts %}
+        <p><strong>Principal parts:</strong>
+          {% if entry.principal_parts is iterable and entry.principal_parts is not string %}
+            {{ entry.principal_parts | join(", ") }}
+          {% else %}
+            {{ entry.principal_parts }}
+          {% endif %}
+        </p>
+      {% endif %}
+      {% if entry.glosses %}
+        <ul>
+          {% if entry.glosses is iterable and entry.glosses is not string %}
+            {% for g in entry.glosses[:6] %}<li>{{ g }}</li>{% endfor %}
+          {% else %}
+            <li>{{ entry.glosses }}</li>
+          {% endif %}
+        </ul>
+      {% endif %}
+      {% if entry.age %}<p><small>Age: {{ entry.age }}</small></p>{% endif %}
+      {% if entry.lemma %}
+        <p><a href="/paradigm/{{ entry.lemma }}?pos={{ entry.pos or '' }}">View full paradigm →</a></p>
+      {% endif %}
+      {% if flags_enabled %}
+        <p>
+          <button class="flag-btn"
+                  data-target-type="word"
+                  data-subject="{{ result.form }}"
+                  data-target-ref="entry:{{ entry.headword or entry.lemma or '?' }}">
+            ⚑ Flag this entry
+          </button>
+        </p>
+      {% endif %}
+    </article>
+  {% endfor %}
+{% endif %}

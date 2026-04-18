@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}{{ result.lemma }} — paradigm | LatinCy Lexicon{% endblock %}
+
+{% block content %}
+<h1>{{ result.lemma }} <small>{% if result.pos %}({{ result.pos }}){% endif %}</small></h1>
+<p>{{ result.forms | length }} forms</p>
+{% include "_paradigm_table.html" %}
+{% endblock %}

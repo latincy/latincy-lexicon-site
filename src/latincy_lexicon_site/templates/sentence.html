@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Sentence: {{ result.text }} | LatinCy Lexicon{% endblock %}
+
+{% block content %}
+<h1>Sentence analysis</h1>
+{% if truncated %}
+  <p class="notice">
+    Your input was {{ original_word_count }} words; analyzing the first
+    {{ word_cap }} below.
+  </p>
+{% endif %}
+<blockquote>{{ result.text }}</blockquote>
+
+<table>
+  <thead>
+    <tr>
+      <th>Token</th><th>Lemma</th><th>POS</th><th>Top gloss</th><th></th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for tok in result.tokens %}
+    <tr>
+      <td><strong>{{ tok.text }}</strong></td>
+      <td>{{ tok.lemma }}</td>
+      <td>{{ tok.pos }}</td>
+      <td>
+        {% if tok.entries and tok.entries[0].glosses %}
+          {{ tok.entries[0].glosses[0] if tok.entries[0].glosses is iterable else tok.entries[0].glosses }}
+        {% endif %}
+      </td>
+      <td>
+        <button class="expand-btn"
+                data-target="entry-{{ loop.index }}"
+                aria-expanded="false"
+                aria-label="Toggle entry for {{ tok.text }}"
+                hx-get="/fragments/word/{{ tok.text }}"
+                hx-target="#entry-{{ loop.index }}"
+                hx-swap="innerHTML">
+          ▸
+        </button>
+        <a href="/word/{{ tok.text }}">↗</a>
+        {% if flags_enabled %}
+          <button class="flag-btn"
+                  data-target-type="sentence"
+                  data-subject="{{ result.text }}"
+                  data-target-ref="token:{{ loop.index0 }}:{{ tok.text }}">
+            ⚑
+          </button>
+        {% endif %}
+      </td>
+    </tr>
+    <tr><td colspan="5" id="entry-{{ loop.index }}"></td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

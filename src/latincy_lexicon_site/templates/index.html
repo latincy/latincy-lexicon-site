@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+<p class="lede">
+  Enter a <strong>sentence</strong> (up to 50 words) for token-level analysis
+  with dictionary entries, or a <strong>single word</strong> in any form to
+  jump straight to its entry and paradigm.
+</p>
+
+<form action="/sentence" method="get" class="lookup">
+  <input type="text" id="text" name="text"
+         value="Poeta bonus carmina scribit."
+         required autofocus>
+  <button type="submit">Look up</button>
+</form>
+
+<p><small>Examples:
+  <a href="/sentence?text=arma+virumque+cano">arma virumque cano</a> ·
+  <a href="/word/amabam">amabam</a> ·
+  <a href="/paradigm/amo">paradigm for <em>amo</em></a>
+</small></p>
+{% endblock %}

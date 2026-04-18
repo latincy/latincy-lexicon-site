@@ -1,0 +1,20 @@
+{% if not result.forms %}
+  <p><em>No paradigm available for <strong>{{ result.lemma }}</strong> (unknown lemma or closed-class word).</em></p>
+{% else %}
+  <table>
+    <thead>
+      <tr><th>Form</th><th>UPOS</th><th>Features</th></tr>
+    </thead>
+    <tbody>
+      {% for f in result.forms %}
+        <tr>
+          <td><strong>{{ f.form }}</strong></td>
+          <td>{{ f.upos or "" }}</td>
+          <td>
+            {% for k, v in f.feats.items() %}{{ k }}={{ v }}{% if not loop.last %}, {% endif %}{% endfor %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endif %}
