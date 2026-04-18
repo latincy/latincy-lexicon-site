@@ -2,7 +2,9 @@
 
 Cold start = fresh Python process → `load_pipeline()` → `warmup()`.
 
-## la_core_web_sm (CI + local dev)
+## la_core_web_sm
+
+### Local dev (M-series Mac)
 
 | Phase | Time |
 |---|---|
@@ -10,13 +12,24 @@ Cold start = fresh Python process → `load_pipeline()` → `warmup()`.
 | Warmup pass (`arma uirumque cano`) | 1.75s |
 | **Total** | **2.77s** |
 
-Well under the design doc's 15s target for `/healthz` to become reachable
-after `systemctl start`.
+### Production droplet (1 vCPU, 1 GB RAM)
 
-## la_core_web_lg (production)
+| Phase | Time |
+|---|---|
+| `spacy.load` + attach whitakers/paradigm | 23.88s |
+| Warmup pass (`arma uirumque cano`) | 5.79s |
+| **Total** | **29.67s** |
 
-Pending — bench on the droplet after first deploy and record here. The
-design doc flags `<10s cold, <1s with Plan A warm cache` as the target.
+Above the design doc's 15s target for `/healthz` reachability, but
+acceptable: restarts are rare, nginx 502s briefly during warmup, users
+don't trigger restarts. Steady-state RAM settles around 495 MB.
+
+## la_core_web_lg (production target)
+
+Pending — current droplet has 961 MB RAM, below the 2 GB floor needed to
+load `la_core_web_lg` without OOM. Bench when the droplet is resized or
+deployed to a host with ≥2 GB RAM. Design doc target: `<10s cold,
+<1s with Plan A warm cache`.
 
 ## How to re-run
 
