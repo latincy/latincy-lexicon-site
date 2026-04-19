@@ -426,15 +426,19 @@ wheels = [
 [[package]]
 name = "latincy-lexicon"
 version = "0.2.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/36/d1/d1d1b6381f009f24ee1a299df3b1fe4fb2c433353010f019d24d86c3c60f/latincy_lexicon-0.2.0.tar.gz", hash = "sha256:e5c29dba7434d74982ddc233735ce8573046e20baa388669401be418119c6e9c", size = 1391654, upload-time = "2026-04-17T02:53:49.117Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/5e/67/20c260554e61eb5020ecde87647d63d336e37a533d1853a5d05d217debd2/latincy_lexicon-0.2.0-py3-none-any.whl", hash = "sha256:ea02b00217a5bc5279be84bbe622623e0bfa6487de35f61229a168bf063005d9", size = 1252263, upload-time = "2026-04-17T02:53:45.023Z" },
+source = { editable = "../latincy-lexicon" }
+
+[package.metadata]
+requires-dist = [
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.0" },
+    { name = "spacy", marker = "extra == 'spacy'", specifier = ">=3.5.0" },
 ]
+provides-extras = ["spacy", "dev"]
 
 [[package]]
 name = "latincy-lexicon-site"
-version = "0.1.5"
+version = "0.1.7"
 source = { editable = "." }
 dependencies = [
     { name = "fastapi" },
@@ -468,7 +472,7 @@ requires-dist = [
     { name = "jinja2", specifier = ">=3.1" },
     { name = "la-core-web-lg", marker = "extra == 'models'", url = "https://huggingface.co/latincy/la_core_web_lg/resolve/main/la_core_web_lg-3.9.0-py3-none-any.whl" },
     { name = "la-core-web-sm", marker = "extra == 'test-models'", url = "https://huggingface.co/latincy/la_core_web_sm/resolve/main/la_core_web_sm-3.9.0-py3-none-any.whl" },
-    { name = "latincy-lexicon", specifier = ">=0.2.0" },
+    { name = "latincy-lexicon", editable = "../latincy-lexicon" },
     { name = "pydantic", specifier = ">=2.8" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3" },
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.24" },

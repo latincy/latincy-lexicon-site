@@ -6,6 +6,8 @@ import asyncio
 import tempfile
 from pathlib import Path
 
+import latincy_lexicon
+
 # Importing registers the spaCy factories for whitakers_words + paradigm_generator.
 import latincy_lexicon.spacy  # noqa: F401
 import spacy
@@ -26,9 +28,21 @@ _PRUNE = [
 ]
 
 
+def _cache_key() -> str:
+    """Cache key that invalidates when lexicon code changes.
+
+    Version alone is insufficient for editable installs (version doesn't
+    bump on every code change). Add build.py mtime so local edits trigger
+    a rebuild; version alone drives invalidation for PyPI installs.
+    """
+    build_py = Path(build_lexicon.__code__.co_filename)
+    mtime = int(build_py.stat().st_mtime) if build_py.exists() else 0
+    return f"{latincy_lexicon.__version__}-{mtime}"
+
+
 def _build_lexicon_artifacts() -> tuple[Path, Path]:
-    """Run latincy-lexicon's build() once per process, cache under tmp."""
-    out = Path(tempfile.gettempdir()) / "latincy-lexicon-site"
+    """Run latincy-lexicon's build() once per (version, build.py mtime), cache under tmp."""
+    out = Path(tempfile.gettempdir()) / "latincy-lexicon-site" / _cache_key()
     out.mkdir(parents=True, exist_ok=True)
     lexicon_path = out / "lexicon.json"
     analyzer_path = out / "analyzer.json"
