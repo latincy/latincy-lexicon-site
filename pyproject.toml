@@ -1,6 +1,6 @@
 [project]
 name = "latincy-lexicon-site"
-version = "0.1.7"
+version = "0.1.8"
 description = "FastAPI lookup service for Latin dictionary entries, sentence analysis, and inflectional paradigms."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -14,7 +14,7 @@ dependencies = [
     "slowapi>=0.1.9",
     "structlog>=24.4",
     "spacy==3.8.11",
-    "latincy-lexicon>=0.2.0",
+    "latincy-lexicon>=0.2.1",
 ]
 
 [project.optional-dependencies]
@@ -40,9 +40,6 @@ allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/latincy_lexicon_site"]
-
-[tool.uv.sources]
-latincy-lexicon = { path = "../latincy-lexicon", editable = true }
 
 [tool.ruff]
 line-length = 100
