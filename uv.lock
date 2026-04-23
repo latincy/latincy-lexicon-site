@@ -425,16 +425,16 @@ wheels = [
 
 [[package]]
 name = "latincy-lexicon"
-version = "0.2.1"
+version = "0.2.2"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/b2/dd/fb2d75cca02214ce79016d17faba2b84b3b53cfbfa4be170baaecbbae205/latincy_lexicon-0.2.1.tar.gz", hash = "sha256:d46b5b48a41fe8ef51b5fe84a81df3d358d6d6b47d28f16fb17f7b5efa29a620", size = 1395650, upload-time = "2026-04-21T15:11:34.367Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/50/cc/819111de2f15c1f954cf9c38f49348e40aa869543cb47260b858ed9a7b41/latincy_lexicon-0.2.2.tar.gz", hash = "sha256:961f475af1d534745773d444f663324f12fb2a1d5848d267622a0b9dc74280f7", size = 1402590, upload-time = "2026-04-23T21:02:12.743Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ef/a8/c655641ad49ba92ea7489f7ea59e3b831c00fae9f7ff4b9225f32d71b705/latincy_lexicon-0.2.1-py3-none-any.whl", hash = "sha256:7827adf977e2b6ec50d1d03f0a99e9ee876bd9b91e8087df426fc82d055f3f75", size = 1254406, upload-time = "2026-04-21T15:11:32.805Z" },
+    { url = "https://files.pythonhosted.org/packages/15/af/7dfa25bc3ce7779e962dea80650448ed25e4043a3b5d3eaf4f708e49b883/latincy_lexicon-0.2.2-py3-none-any.whl", hash = "sha256:1bfdd2cfcf03c0945e9040d738fc32ef1ac5dc3bf56f19709e7c18cb735423e4", size = 1259280, upload-time = "2026-04-23T21:02:11.139Z" },
 ]
 
 [[package]]
 name = "latincy-lexicon-site"
-version = "0.1.11"
+version = "0.1.13"
 source = { editable = "." }
 dependencies = [
     { name = "fastapi" },
@@ -468,7 +468,7 @@ requires-dist = [
     { name = "jinja2", specifier = ">=3.1" },
     { name = "la-core-web-lg", marker = "extra == 'models'", url = "https://huggingface.co/latincy/la_core_web_lg/resolve/main/la_core_web_lg-3.9.0-py3-none-any.whl" },
     { name = "la-core-web-sm", marker = "extra == 'test-models'", url = "https://huggingface.co/latincy/la_core_web_sm/resolve/main/la_core_web_sm-3.9.0-py3-none-any.whl" },
-    { name = "latincy-lexicon", specifier = ">=0.2.1" },
+    { name = "latincy-lexicon", specifier = ">=0.2.2" },
     { name = "pydantic", specifier = ">=2.8" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3" },
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.24" },
