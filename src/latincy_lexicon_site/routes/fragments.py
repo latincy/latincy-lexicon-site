@@ -15,11 +15,12 @@ router = APIRouter(prefix="/fragments")
 
 
 @router.get("/word/{form}", response_class=HTMLResponse)
-async def fragment_word(form: str, request: Request):
+async def fragment_word(form: str, request: Request, pos: str | None = None):
     analyzer = request.app.state.analyzer
     nlp = request.app.state.nlp
+    cache_input = f"{form}|{pos or ''}"
     result = analyzer.get_or_compute(
-        "word", form, lambda x: analyze_word_sync(nlp, x)
+        "word", cache_input, lambda _: analyze_word_sync(nlp, form, pos)
     )
     return templates.TemplateResponse(
         request=request, name="_word_entries.html", context={"result": result}

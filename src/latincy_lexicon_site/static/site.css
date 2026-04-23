@@ -50,6 +50,22 @@ form.lookup button:hover { opacity: 0.9; }
 }
 .expand-btn:hover { background: #f5f5f5; color: var(--accent); }
 .expand-btn[aria-expanded="true"] { color: var(--accent); border-color: var(--accent); }
+.entry--pos-match {
+  border-left: 3px solid var(--accent);
+  padding-left: 0.75rem;
+  background: #f4faff;
+}
+.pos-match-badge {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.05rem 0.45rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--accent-text);
+  background: var(--accent);
+  border-radius: 3px;
+  vertical-align: middle;
+}
 .notice {
   background: #fff8e6;
   border-left: 3px solid #d9a441;

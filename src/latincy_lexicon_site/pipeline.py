@@ -102,13 +102,29 @@ def _filter_entries(entries: list[dict] | None) -> list[dict]:
     return [_clean_entry(e) for e in (entries or []) if not _is_morpheme_entry(e)]
 
 
+def _annotate_pos_match(
+    entries: list[dict], token_pos: str | None
+) -> list[dict]:
+    """Tag each entry with pos_match=True when its ud_pos includes token_pos.
+    Leaves ordering untouched — the library already sorts matches first.
+    Used to highlight the LatinCy-preferred sense in the expanded view while
+    still showing the full WW entry."""
+    if not token_pos:
+        return entries
+    return [
+        {**e, "pos_match": token_pos in (e.get("ud_pos") or [])} for e in entries
+    ]
+
+
 def _token_to_dict(token) -> dict:
+    entries = _annotate_pos_match(_filter_entries(token._.lexicon), token.pos_)
     return {
         "text": token.text,
         "lemma": token.lemma_,
         "pos": token.pos_,
+        "tag": token.tag_,
         "morph": str(token.morph),
-        "entries": _filter_entries(token._.lexicon),
+        "entries": entries,
     }
 
 
@@ -122,7 +138,12 @@ def analyze_sentence_sync(nlp: Language, text: str) -> dict:
     }
 
 
-def analyze_word_sync(nlp: Language, form: str) -> dict:
+def analyze_word_sync(
+    nlp: Language, form: str, pos: str | None = None
+) -> dict:
+    """Look up a word form. If pos is given (e.g., carried over from an
+    upstream sentence annotation), mark matching entries so the UI can
+    highlight the preferred sense — entries are not filtered."""
     doc = nlp(form)
     token = next((t for t in doc if not (t.is_punct or t.is_space)), None)
     if token is None:
@@ -130,7 +151,7 @@ def analyze_word_sync(nlp: Language, form: str) -> dict:
     return {
         "form": form,
         "normalized": token.text.lower(),
-        "analyses": _filter_entries(token._.lexicon),
+        "analyses": _annotate_pos_match(_filter_entries(token._.lexicon), pos),
     }
 
 
@@ -166,8 +187,10 @@ async def analyze_sentence_async(nlp: Language, text: str) -> dict:
     return await asyncio.to_thread(analyze_sentence_sync, nlp, text)
 
 
-async def analyze_word_async(nlp: Language, form: str) -> dict:
-    return await asyncio.to_thread(analyze_word_sync, nlp, form)
+async def analyze_word_async(
+    nlp: Language, form: str, pos: str | None = None
+) -> dict:
+    return await asyncio.to_thread(analyze_word_sync, nlp, form, pos)
 
 
 async def analyze_paradigm_async(

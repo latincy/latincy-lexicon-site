@@ -22,7 +22,7 @@
     <tr>
       <td><strong>{{ tok.text }}</strong></td>
       <td>{{ tok.lemma }}</td>
-      <td>{{ tok.pos }}</td>
+      <td title="UPOS: {{ tok.pos }}">{{ tok.tag or tok.pos }}</td>
       <td>
         {% if tok.entries and tok.entries[0].glosses %}
           {{ tok.entries[0].glosses[0] if tok.entries[0].glosses is iterable else tok.entries[0].glosses }}
@@ -33,7 +33,7 @@
                 data-target="entry-{{ loop.index }}"
                 aria-expanded="false"
                 aria-label="Toggle entry for {{ tok.text }}"
-                hx-get="/fragments/word/{{ tok.text }}"
+                hx-get="/fragments/word/{{ tok.text }}?pos={{ tok.pos }}"
                 hx-target="#entry-{{ loop.index }}"
                 hx-swap="innerHTML">
           ▸

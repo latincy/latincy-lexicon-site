@@ -29,6 +29,7 @@ class TokenOut(BaseModel):
     text: str
     lemma: str
     pos: str
+    tag: str
     morph: str
     entries: list[dict]
 
