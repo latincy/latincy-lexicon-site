@@ -54,4 +54,4 @@ def test_fragment_word_annotates_pos_match(client):
     r = client.get("/fragments/word/bonus", params={"pos": "ADJ"})
     assert r.status_code == 200
     assert "entry--pos-match" in r.text
-    assert "annotated sense" in r.text
+    assert "pos-match-badge" in r.text
