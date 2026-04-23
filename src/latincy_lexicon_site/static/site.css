@@ -57,7 +57,7 @@ form.lookup button:hover { opacity: 0.9; }
   margin: 1rem 0;
   color: #bfbfbf;
 }
-.entry--pos-match {
+.entry--top-sense {
   border-color: var(--accent);
   color: inherit;
 }

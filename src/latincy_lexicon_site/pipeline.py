@@ -112,12 +112,9 @@ def _annotate_senses(
     token_index: int | None = None,
     scorer: SenseScorer = default_scorer,
 ) -> list[dict]:
-    """Tag each entry with:
-
-    - `pos_match`: does this entry's `ud_pos` include the token's POS?
-      Drives the accent-border styling in the expanded view.
-    - `top_sense`: is this the single best-scored entry for this token?
-      Drives the ✓ badge. At most one entry per token is true.
+    """Tag at most one entry with `top_sense=True` — the single best-scored
+    candidate for the annotated token POS. Drives both the accent styling
+    and the ✓ badge in the expanded view; everything else renders muted.
 
     Scoring is delegated so phase 2 can swap in a cross-lingual SBERT
     scorer without touching the pipeline.
@@ -139,13 +136,7 @@ def _annotate_senses(
     if best_score == float("-inf"):
         best_idx = None
     return [
-        {
-            **e,
-            "pos_match": bool(token_pos)
-            and token_pos in (e.get("ud_pos") or []),
-            "top_sense": (i == best_idx),
-        }
-        for i, e in enumerate(entries)
+        {**e, "top_sense": (i == best_idx)} for i, e in enumerate(entries)
     ]
 
 

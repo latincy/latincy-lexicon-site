@@ -27,22 +27,9 @@ def test_prefix_entries_filtered_in_sentence(client):
             assert entry.get("pos") != "PREFIX"
 
 
-def test_sentence_entries_annotate_pos_match(client):
-    """bonus has both ADJ and NOUN senses in WW; all POS-matching senses
-    are flagged with pos_match for the border-highlight styling."""
-    r = client.get("/api/v1/sentence", params={"text": "bonus vir"})
-    assert r.status_code == 200
-    tokens = {t["text"]: t for t in r.json()["tokens"]}
-    bonus = tokens.get("bonus")
-    assert bonus is not None
-    assert bonus["pos"] == "ADJ"
-    for entry in bonus["entries"]:
-        expected = "ADJ" in (entry.get("ud_pos") or [])
-        assert entry.get("pos_match") is expected
-
-
 def test_sentence_entries_top_sense_is_unique(client):
-    """Only one entry per token carries top_sense=True — the badge target."""
+    """Only one entry per token carries top_sense=True — it drives both
+    the accent styling and the ✓ badge; every other entry is muted."""
     r = client.get("/api/v1/sentence", params={"text": "bonus vir"})
     assert r.status_code == 200
     for tok in r.json()["tokens"]:
@@ -79,9 +66,9 @@ def test_sentence_tokens_expose_xpos_tag(client):
 
 
 def test_fragment_word_badge_marks_single_top_sense(client):
-    """Expanded-entry fragment with ?pos= marks pos-match on all NOUN/ADJ
-    entries (border) but only the top sense gets the ✓ badge."""
+    """Expanded-entry fragment with ?pos= applies the accent class and
+    the ✓ badge to exactly one entry — the top sense."""
     r = client.get("/fragments/word/bonus", params={"pos": "ADJ"})
     assert r.status_code == 200
-    assert "entry--pos-match" in r.text
+    assert r.text.count("entry--top-sense") == 1
     assert r.text.count("pos-match-badge") == 1
