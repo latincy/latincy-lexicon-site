@@ -14,6 +14,8 @@ import spacy
 from latincy_lexicon.build import build as build_lexicon
 from spacy.language import Language
 
+from latincy_lexicon_site.sense_scoring import SenseScorer, default_scorer
+
 # la_core_web_{sm,lg} 3.9.0 pipes we don't need for lookup. Keep both
 # lemmatizers — they complement each other (lookup handles common cases fast,
 # trainable covers edge forms) and are cheap relative to parser/ner.
@@ -102,22 +104,58 @@ def _filter_entries(entries: list[dict] | None) -> list[dict]:
     return [_clean_entry(e) for e in (entries or []) if not _is_morpheme_entry(e)]
 
 
-def _annotate_pos_match(
-    entries: list[dict], token_pos: str | None
+def _annotate_senses(
+    entries: list[dict],
+    token_pos: str | None,
+    *,
+    sentence_text: str | None = None,
+    token_index: int | None = None,
+    scorer: SenseScorer = default_scorer,
 ) -> list[dict]:
-    """Tag each entry with pos_match=True when its ud_pos includes token_pos.
-    Leaves ordering untouched — the library already sorts matches first.
-    Used to highlight the LatinCy-preferred sense in the expanded view while
-    still showing the full WW entry."""
-    if not token_pos:
+    """Tag each entry with:
+
+    - `pos_match`: does this entry's `ud_pos` include the token's POS?
+      Drives the accent-border styling in the expanded view.
+    - `top_sense`: is this the single best-scored entry for this token?
+      Drives the ✓ badge. At most one entry per token is true.
+
+    Scoring is delegated so phase 2 can swap in a cross-lingual SBERT
+    scorer without touching the pipeline.
+    """
+    if not entries:
         return entries
+    scores = scorer.score(
+        entries=entries,
+        token_pos=token_pos,
+        sentence_text=sentence_text,
+        token_index=token_index,
+    )
+    best_idx: int | None = None
+    best_score = float("-inf")
+    for i, s in enumerate(scores):
+        if s > best_score:
+            best_score = s
+            best_idx = i
+    if best_score == float("-inf"):
+        best_idx = None
     return [
-        {**e, "pos_match": token_pos in (e.get("ud_pos") or [])} for e in entries
+        {
+            **e,
+            "pos_match": bool(token_pos)
+            and token_pos in (e.get("ud_pos") or []),
+            "top_sense": (i == best_idx),
+        }
+        for i, e in enumerate(entries)
     ]
 
 
 def _token_to_dict(token) -> dict:
-    entries = _annotate_pos_match(_filter_entries(token._.lexicon), token.pos_)
+    entries = _annotate_senses(
+        _filter_entries(token._.lexicon),
+        token.pos_,
+        sentence_text=token.doc.text,
+        token_index=token.i,
+    )
     return {
         "text": token.text,
         "lemma": token.lemma_,
@@ -151,7 +189,7 @@ def analyze_word_sync(
     return {
         "form": form,
         "normalized": token.text.lower(),
-        "analyses": _annotate_pos_match(_filter_entries(token._.lexicon), pos),
+        "analyses": _annotate_senses(_filter_entries(token._.lexicon), pos),
     }
 
 
