@@ -37,7 +37,12 @@ class SenseScorer(Protocol):
 
 
 class FrequencySenseScorer:
-    """Score = Whitaker freq prior, gated on POS match."""
+    """Score = Whitaker freq prior. With a token POS, non-matching entries
+    are dropped to -inf so the badge stays on a sense that agrees with the
+    annotation. Without a token POS (e.g. standalone /word/{form} lookups
+    that have no sentence context), fall back to pure freq ranking — the
+    highest-freq entry still earns top_sense, so single-entry forms like
+    amabam don't render universally muted."""
 
     def score(
         self,
@@ -48,7 +53,7 @@ class FrequencySenseScorer:
         token_index: int | None = None,
     ) -> list[float]:
         if not token_pos:
-            return [_NO_MATCH] * len(entries)
+            return [_FREQ_SCORE.get(e.get("freq", "X"), 0.3) for e in entries]
         return [
             _FREQ_SCORE.get(e.get("freq", "X"), 0.3)
             if token_pos in (e.get("ud_pos") or [])

@@ -1,6 +1,6 @@
 [project]
 name = "latincy-lexicon-site"
-version = "0.1.15"
+version = "0.1.16"
 description = "FastAPI lookup service for Latin dictionary entries, sentence analysis, and inflectional paradigms."
 readme = "README.md"
 requires-python = ">=3.12"

@@ -65,6 +65,20 @@ def test_sentence_tokens_expose_xpos_tag(client):
         assert isinstance(tok["tag"], str)
 
 
+def test_word_lookup_marks_top_sense_without_pos_context(client):
+    """Standalone /word/{form} has no token POS, but a single-entry form
+    like amabam should still render with the accent (top_sense=True),
+    not greyed out as 'no annotated sense available'."""
+    r = client.get("/api/v1/word/amabam")
+    assert r.status_code == 200
+    analyses = r.json()["analyses"]
+    assert analyses, "amabam should have at least one analysis"
+    tops = [e for e in analyses if e.get("top_sense")]
+    assert len(tops) == 1, (
+        f"expected exactly one top_sense entry, got {len(tops)}"
+    )
+
+
 def test_fragment_word_badge_marks_single_top_sense(client):
     """Expanded-entry fragment with ?pos= applies the accent class and
     the ✓ badge to exactly one entry — the top sense."""
