@@ -2,7 +2,27 @@
 {% block title %}{{ result.lemma }} — paradigm | LatinCy Lexicon{% endblock %}
 
 {% block content %}
-<h1>{{ result.lemma }} <small>{% if result.pos %}({{ result.pos }}){% endif %}</small></h1>
-<p>{{ result.forms | length }} forms</p>
+<h1>{{ result.lemma }}{% if result.entry and result.entry.pos %}
+  <small title="Whitaker POS: {{ result.entry.pos }}">({{ result.entry.pos | pos_label }})</small>
+{% elif result.pos %}
+  <small>({{ result.pos | lower }})</small>
+{% endif %}</h1>
+
+{% if result.entry %}
+  {% set pp = result.entry | principal_parts %}
+  {% if pp %}
+    <p><strong>Principal parts:</strong> {{ pp }}</p>
+  {% endif %}
+  {% if result.entry.glosses %}
+    <p class="paradigm-gloss">
+      {% if result.entry.glosses is iterable and result.entry.glosses is not string %}
+        {{ result.entry.glosses[:3] | join("; ") }}
+      {% else %}
+        {{ result.entry.glosses }}
+      {% endif %}
+    </p>
+  {% endif %}
+{% endif %}
+
 {% include "_paradigm_table.html" %}
 {% endblock %}

@@ -1,20 +1,135 @@
-{% if not result.forms %}
+{% set layout = layout_paradigm(result.forms, result.pos) %}
+{% if layout.kind == "empty" %}
   <p><em>No paradigm available for <strong>{{ result.lemma }}</strong> (unknown lemma or closed-class word).</em></p>
 {% else %}
-  <table>
+
+{% set _PERSON_LABEL = {"1": "1st", "2": "2nd", "3": "3rd"} %}
+{% set _NUMBER_LABEL = {"Sing": "Singular", "Plur": "Plural"} %}
+{% set _CASE_LABEL = {
+  "Nom": "Nom.", "Gen": "Gen.", "Dat": "Dat.",
+  "Acc": "Acc.", "Abl": "Abl.", "Voc": "Voc.", "Loc": "Loc."
+} %}
+{% set _GENDER_LABEL = {"Masc": "Masc.", "Fem": "Fem.", "Neut": "Neut.", "Com": "Common"} %}
+{% set _TENSE_LABEL = {
+  "Pres": "Present", "Imp": "Imperfect", "Past": "Perfect", "Pst": "Perfect",
+  "Fut": "Future", "Pqp": "Pluperfect", "FutP": "Future Perfect"
+} %}
+{% set _VOICE_LABEL = {"Act": "Active", "Pass": "Passive", "Mid": "Middle"} %}
+
+{% macro render_decl(decl) %}
+  {% if decl.cases %}
+  <table class="paradigm-table">
     <thead>
-      <tr><th>Form</th><th>UPOS</th><th>Features</th></tr>
+      <tr>
+        <th></th>
+        {% if decl.genders %}
+          {% for n in decl.numbers %}
+            {% for g in decl.genders %}
+              <th>{{ _NUMBER_LABEL[n] }} {{ _GENDER_LABEL.get(g, g) }}</th>
+            {% endfor %}
+          {% endfor %}
+        {% else %}
+          {% for n in decl.numbers %}<th>{{ _NUMBER_LABEL[n] }}</th>{% endfor %}
+        {% endif %}
+      </tr>
     </thead>
     <tbody>
-      {% for f in result.forms %}
-        <tr>
-          <td><strong>{{ f.form }}</strong></td>
-          <td>{{ f.upos or "" }}</td>
-          <td>
-            {% for k, v in f.feats.items() %}{{ k }}={{ v }}{% if not loop.last %}, {% endif %}{% endfor %}
-          </td>
-        </tr>
+      {% for c in decl.cases %}
+      <tr>
+        <th>{{ _CASE_LABEL.get(c, c) }}</th>
+        {% if decl.genders %}
+          {% for n in decl.numbers %}
+            {% for g in decl.genders %}
+              <td>{{ (decl.cells.get((c, n, g)) or []) | unique | join(", ") or "—" }}</td>
+            {% endfor %}
+          {% endfor %}
+        {% else %}
+          {% for n in decl.numbers %}
+            <td>{{ (decl.cells.get((c, n, decl.single_gender)) or decl.cells.get((c, n, "")) or []) | unique | join(", ") or "—" }}</td>
+          {% endfor %}
+        {% endif %}
+      </tr>
       {% endfor %}
     </tbody>
   </table>
+  {% endif %}
+{% endmacro %}
+
+{% macro render_finite(block) %}
+  <h3>{{ block.title }}</h3>
+  {% for v in block.voices %}
+    <h4>{{ _VOICE_LABEL.get(v, v) }}</h4>
+    <table class="paradigm-table">
+      <thead>
+        <tr>
+          <th></th>
+          <th>1sg</th><th>2sg</th><th>3sg</th>
+          <th>1pl</th><th>2pl</th><th>3pl</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for row in block.rows %}
+        {% set grid = row.voices.get(v) %}
+        {% if grid %}
+        <tr>
+          <th>{{ _TENSE_LABEL.get(row.tense, row.tense) }}</th>
+          {# grid is [number_row][person_col]: [Sing[1,2,3], Plur[1,2,3]] #}
+          {% for p in [0, 1, 2] %}<td>{{ (grid[0][p] or []) | unique | join(", ") or "—" }}</td>{% endfor %}
+          {% for p in [0, 1, 2] %}<td>{{ (grid[1][p] or []) | unique | join(", ") or "—" }}</td>{% endfor %}
+        </tr>
+        {% endif %}
+      {% endfor %}
+      </tbody>
+    </table>
+  {% endfor %}
+{% endmacro %}
+
+{% macro render_list(block) %}
+  <h3>{{ block.title }}</h3>
+  <table class="paradigm-table paradigm-list">
+    <tbody>
+    {% for r in block.rows %}
+      <tr>
+        <th>{{ r.label }}</th>
+        <td>{{ (r.forms or []) | unique | join(", ") }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+{% endmacro %}
+
+{% macro render_decl_block(block) %}
+  <h3>{{ block.title }}</h3>
+  {{ render_decl(block.decl) }}
+{% endmacro %}
+
+{% macro render_participles(block) %}
+  <h3>{{ block.title }}</h3>
+  {% for r in block.rows %}
+    <h4>{{ r.label }}</h4>
+    {{ render_decl(r.decl) }}
+  {% endfor %}
+{% endmacro %}
+
+<p class="paradigm-count"><small>{{ layout.total }} forms total</small></p>
+
+{% for block in layout.blocks %}
+  {% if block.kind == "finite" %}{{ render_finite(block) }}
+  {% elif block.kind == "list" %}{{ render_list(block) }}
+  {% elif block.kind == "decl" %}{{ render_decl_block(block) }}
+  {% elif block.kind == "participles" %}{{ render_participles(block) }}
+  {% endif %}
+{% endfor %}
+
+{% if layout.alternates %}
+  <details class="paradigm-alternates">
+    <summary>Alternate forms ({{ layout.alternates | length }})</summary>
+    <ul>
+    {% for a in layout.alternates %}
+      <li><strong>{{ a.form }}</strong> <small>{{ a.feats }}</small></li>
+    {% endfor %}
+    </ul>
+  </details>
+{% endif %}
+
 {% endif %}

@@ -189,7 +189,7 @@ def analyze_paradigm_sync(nlp: Language, lemma: str, pos: str | None = None) -> 
     doc = nlp(lemma)
     token = next((t for t in doc if not (t.is_punct or t.is_space)), None)
     if token is None:
-        return {"lemma": lemma, "pos": pos, "forms": []}
+        return {"lemma": lemma, "pos": pos, "forms": [], "entry": None}
 
     paradigm = token._.paradigm or []
     forms = []
@@ -209,7 +209,29 @@ def analyze_paradigm_sync(nlp: Language, lemma: str, pos: str | None = None) -> 
         if pos and upos != pos:
             continue
         forms.append({"form": form_val, "upos": upos, "feats": feats})
-    return {"lemma": lemma, "pos": pos, "forms": forms}
+
+    # Attach the matching lexicon entry so the page header can render
+    # principal parts, gender, etc. Prefer the POS-matching entry if a
+    # pos query param is set; otherwise the first entry available.
+    entry = None
+    candidates = _filter_entries(token._.lexicon)
+    if candidates:
+        if pos:
+            for e in candidates:
+                if pos in (e.get("ud_pos") or []):
+                    entry = e
+                    break
+            if entry is None:
+                entry = candidates[0]
+        else:
+            entry = candidates[0]
+
+    return {
+        "lemma": lemma,
+        "pos": pos,
+        "forms": forms,
+        "entry": entry,
+    }
 
 
 async def analyze_sentence_async(nlp: Language, text: str) -> dict:

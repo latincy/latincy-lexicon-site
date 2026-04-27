@@ -66,6 +66,53 @@ form.lookup button:hover { opacity: 0.9; }
   color: var(--accent);
   font-weight: 600;
 }
+.paradigm-count { color: #888; margin-bottom: 1.5rem; }
+.paradigm-gloss { color: #555; font-style: italic; margin-top: -0.4rem; }
+.paradigm-table {
+  width: auto;
+  min-width: 28rem;
+  margin: 0.4rem 0 1.25rem 0;
+  font-size: 0.95rem;
+}
+.paradigm-table th,
+.paradigm-table td {
+  text-align: left;
+  padding: 0.3rem 0.7rem;
+  border-bottom: 1px solid #eee;
+  vertical-align: top;
+}
+.paradigm-table thead th {
+  background: #fafafa;
+  font-weight: 600;
+  color: #555;
+  font-size: 0.85rem;
+  text-transform: none;
+}
+.paradigm-table tbody th {
+  background: #fafafa;
+  font-weight: 500;
+  color: #444;
+  white-space: nowrap;
+}
+.paradigm-list th {
+  width: 12rem;
+  font-weight: 500;
+  color: #555;
+}
+.paradigm-alternates {
+  margin: 1.5rem 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #fafafa;
+}
+.paradigm-alternates summary { cursor: pointer; color: #555; }
+.paradigm-alternates ul {
+  margin: 0.5rem 0 0 0;
+  padding-left: 1.5rem;
+  columns: 2;
+  font-size: 0.9rem;
+}
 .flag-btn {
   background: transparent;
   border: 1px solid transparent;

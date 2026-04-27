@@ -55,3 +55,4 @@ class ParadigmResponse(BaseModel):
     lemma: str
     pos: str | None
     forms: list[ParadigmForm]
+    entry: dict | None = None
