@@ -67,6 +67,28 @@ form.lookup button:hover { opacity: 0.9; }
   font-weight: 600;
 }
 .paradigm-count { color: #888; margin-bottom: 1.5rem; }
+.paradigm-lemma {
+  text-decoration: underline;
+  text-decoration-color: #b8d4f0;
+  text-decoration-thickness: 3px;
+  text-underline-offset: 0.2em;
+}
+.paradigm-query-note {
+  color: #555;
+  margin: -0.4rem 0 0.8rem 0;
+  font-size: 0.95rem;
+}
+.paradigm-query-form { font-style: italic; }
+.paradigm-table td.paradigm-hit {
+  border: 2px solid #6ea8d6;
+  border-radius: 4px;
+  background: #eef5fb;
+}
+.paradigm-table td.paradigm-hit mark {
+  background: transparent;
+  font-weight: 600;
+  color: #1f4c80;
+}
 .paradigm-gloss { color: #555; font-style: italic; margin-top: -0.4rem; }
 .paradigm-table {
   width: auto;

@@ -1,3 +1,3 @@
 """latincy-lexicon-site: FastAPI lookup service for Latin."""
 
-__version__ = "0.1.17"
+__version__ = "0.1.18"

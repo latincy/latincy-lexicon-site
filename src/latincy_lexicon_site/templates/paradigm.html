@@ -2,27 +2,38 @@
 {% block title %}{{ result.lemma }} — paradigm | LatinCy Lexicon{% endblock %}
 
 {% block content %}
-<h1>{{ result.lemma }}{% if result.entry and result.entry.pos %}
-  <small title="Whitaker POS: {{ result.entry.pos }}">({{ result.entry.pos | pos_label }})</small>
+<h1><span class="paradigm-lemma">{{ result.lemma }}</span>{% if result.paradigms and result.paradigms[0].entry and result.paradigms[0].entry.pos %}
+  <small title="Whitaker POS: {{ result.paradigms[0].entry.pos }}">({{ result.paradigms[0].entry.pos | pos_label }})</small>
 {% elif result.pos %}
   <small>({{ result.pos | lower }})</small>
 {% endif %}</h1>
-
-{% if result.entry %}
-  {% set pp = result.entry | principal_parts %}
-  {% if pp %}
-    <p><strong>Principal parts:</strong> {{ pp }}</p>
-  {% endif %}
-  {% if result.entry.glosses %}
-    <p class="paradigm-gloss">
-      {% if result.entry.glosses is iterable and result.entry.glosses is not string %}
-        {{ result.entry.glosses[:3] | join("; ") }}
-      {% else %}
-        {{ result.entry.glosses }}
-      {% endif %}
-    </p>
-  {% endif %}
+{% if result.query and result.query != result.lemma %}
+  <p class="paradigm-query-note">Showing the paradigm for <strong>{{ result.lemma }}</strong> — your query <strong class="paradigm-query-form">{{ result.query }}</strong> is highlighted below.</p>
+{% endif %}
+{% if result.paradigms | length > 1 %}
+  <p class="paradigm-homonym-note"><em>{{ result.lemma }}</em> is shared by {{ result.paradigms | length }} distinct verbs; their paradigms are shown separately below.</p>
 {% endif %}
 
-{% include "_paradigm_table.html" %}
+{% for paradigm in result.paradigms %}
+  {% set entry = paradigm.entry %}
+  {% if result.paradigms | length > 1 %}
+    <hr class="paradigm-divider">
+    <h2 class="paradigm-homonym-heading">{{ loop.index }}. {{ result.lemma }}{% if entry and entry.pos %} <small>({{ entry.pos | pos_label }})</small>{% endif %}</h2>
+  {% endif %}
+  {% if entry %}
+    {% set pp = entry | principal_parts %}
+    {% if pp %}
+      <p><strong>Principal parts:</strong> {{ pp }}</p>
+    {% endif %}
+    {% set glosses = entry.glosses or [] %}
+    {% set extra = paradigm.extra_glosses or [] %}
+    {% set all_glosses = (glosses[:3] + extra) | unique | list %}
+    {% if all_glosses %}
+      <p class="paradigm-gloss">{{ all_glosses | join("; ") }}</p>
+    {% endif %}
+  {% endif %}
+  {% with paradigm = paradigm, query = result.query or "" %}
+    {% include "_paradigm_table.html" %}
+  {% endwith %}
+{% endfor %}
 {% endblock %}

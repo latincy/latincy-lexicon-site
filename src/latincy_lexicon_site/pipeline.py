@@ -185,15 +185,52 @@ def analyze_word_sync(
 
 
 def analyze_paradigm_sync(nlp: Language, lemma: str, pos: str | None = None) -> dict:
-    """Run lemma through pipeline to generate full paradigm."""
+    """Run lemma through pipeline to generate full paradigm(s).
+
+    The URL slug may itself be an inflected form (e.g. ``fuerint``); the
+    response distinguishes ``query`` (what the user typed) from ``lemma``
+    (the canonical form the pipeline resolved to).
+
+    A single lemma can correspond to multiple distinct verbs (homonyms)
+    sharing a headword but with different principal parts and therefore
+    different conjugations — e.g. ``dico`` is both ``dicere`` (3rd conj,
+    "say") and ``dicare`` (1st conj, "dedicate"). The library lumps all
+    of their forms together; here we group lexicon entries by principal
+    parts and emit one paradigm per group so the template can render
+    them independently.
+    """
     doc = nlp(lemma)
     token = next((t for t in doc if not (t.is_punct or t.is_space)), None)
     if token is None:
-        return {"lemma": lemma, "pos": pos, "forms": [], "entry": None}
+        return {"lemma": lemma, "query": lemma, "pos": pos, "paradigms": []}
+    resolved = token.lemma_ or lemma
 
-    paradigm = token._.paradigm or []
-    forms = []
-    for f in paradigm:
+    forms = _paradigm_forms(token, pos)
+    # Restrict to entries whose headword matches the resolved lemma —
+    # ``token._.lexicon`` includes any entry where the surface form is
+    # found, so for `sum` we'd otherwise pull in `sumo` and placeholder
+    # rows. Keep only the ones that actually share the lemma.
+    candidates = [
+        e for e in (_filter_entries(token._.lexicon) or [])
+        if e.get("headword") == resolved
+    ]
+    paradigms = _group_paradigms(candidates, forms, pos)
+    return {
+        "lemma": resolved,
+        "query": lemma,
+        "pos": pos,
+        "paradigms": paradigms,
+        # Top-level ``forms`` and ``entry`` retained for API consumers
+        # that expect the pre-multi-paradigm shape; they reflect the
+        # first paradigm group.
+        "forms": forms,
+        "entry": paradigms[0]["entry"] if paradigms else None,
+    }
+
+
+def _paradigm_forms(token, pos: str | None) -> list[dict]:
+    out = []
+    for f in token._.paradigm or []:
         if isinstance(f, dict):
             form_val = f.get("form")
             feats = f.get("feats") or {}
@@ -203,35 +240,35 @@ def analyze_paradigm_sync(nlp: Language, lemma: str, pos: str | None = None) -> 
             feats = f.feats or {}
             upos = f.upos
         if isinstance(feats, str):
-            feats = dict(
-                kv.split("=", 1) for kv in feats.split("|") if "=" in kv
-            )
+            feats = dict(kv.split("=", 1) for kv in feats.split("|") if "=" in kv)
         if pos and upos != pos:
             continue
-        forms.append({"form": form_val, "upos": upos, "feats": feats})
+        out.append({"form": form_val, "upos": upos, "feats": feats})
+    return out
 
-    # Attach the matching lexicon entry so the page header can render
-    # principal parts, gender, etc. Prefer the POS-matching entry if a
-    # pos query param is set; otherwise the first entry available.
-    entry = None
-    candidates = _filter_entries(token._.lexicon)
-    if candidates:
-        if pos:
-            for e in candidates:
-                if pos in (e.get("ud_pos") or []):
-                    entry = e
-                    break
-            if entry is None:
-                entry = candidates[0]
+
+def _group_paradigms(
+    candidates: list[dict] | None, forms: list[dict], pos: str | None
+) -> list[dict]:
+    """Group lexicon entries by ``principal_parts`` so homonyms with
+    different conjugations get separate paradigms. Within a group we
+    merge the glosses from each entry. Returns at least one paradigm
+    even when no lexicon entry was found (with ``entry=None``)."""
+    if pos and candidates:
+        candidates = [e for e in candidates if pos in (e.get("ud_pos") or [])]
+    if not candidates:
+        return [{"entry": None, "extra_glosses": [], "forms": forms}]
+    by_pp: dict[tuple, dict] = {}
+    order: list[tuple] = []
+    for e in candidates:
+        pp_key = tuple(e.get("principal_parts") or [])
+        if pp_key not in by_pp:
+            by_pp[pp_key] = {"entry": e, "extra_glosses": [], "forms": forms}
+            order.append(pp_key)
         else:
-            entry = candidates[0]
-
-    return {
-        "lemma": lemma,
-        "pos": pos,
-        "forms": forms,
-        "entry": entry,
-    }
+            extra = (e.get("glosses") or [])[:1]
+            by_pp[pp_key]["extra_glosses"].extend(extra)
+    return [by_pp[k] for k in order]
 
 
 async def analyze_sentence_async(nlp: Language, text: str) -> dict:

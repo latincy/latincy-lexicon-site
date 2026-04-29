@@ -1,6 +1,11 @@
-{% set layout = layout_paradigm(result.forms, result.pos) %}
+{% set _ctx = paradigm if paradigm is defined else result %}
+{% set _forms = _ctx.forms %}
+{% set _entry = _ctx.entry if _ctx.entry is defined else None %}
+{% set _pos = (result.pos if result is defined else None) %}
+{% set query = query if query is defined else (result.query if result is defined else "") %}
+{% set layout = layout_paradigm(_forms, _pos, _entry) %}
 {% if layout.kind == "empty" %}
-  <p><em>No paradigm available for <strong>{{ result.lemma }}</strong> (unknown lemma or closed-class word).</em></p>
+  <p><em>No paradigm available for <strong>{{ result.lemma if result is defined else "" }}</strong> (unknown lemma or closed-class word).</em></p>
 {% else %}
 
 {% set _PERSON_LABEL = {"1": "1st", "2": "2nd", "3": "3rd"} %}
@@ -15,6 +20,21 @@
   "Fut": "Future", "Pqp": "Pluperfect", "FutP": "Future Perfect"
 } %}
 {% set _VOICE_LABEL = {"Act": "Active", "Pass": "Passive", "Mid": "Middle"} %}
+
+{% macro cell(forms) %}
+  {% set forms = (forms or []) | unique | list %}
+  {%- if not forms -%}
+    <td>—</td>
+  {%- else -%}
+    {%- set is_hit = query and query in forms -%}
+    <td{% if is_hit %} class="paradigm-hit"{% endif %}>
+    {%- for f in forms -%}
+      {%- if f == query -%}<mark>{{ f }}</mark>{%- else -%}{{ f }}{%- endif -%}
+      {%- if not loop.last %}, {% endif -%}
+    {%- endfor -%}
+    </td>
+  {%- endif -%}
+{% endmacro %}
 
 {% macro render_decl(decl) %}
   {% if decl.cases %}
@@ -40,12 +60,12 @@
         {% if decl.genders %}
           {% for n in decl.numbers %}
             {% for g in decl.genders %}
-              <td>{{ (decl.cells.get((c, n, g)) or []) | unique | join(", ") or "—" }}</td>
+              {{ cell(decl.cells.get((c, n, g))) }}
             {% endfor %}
           {% endfor %}
         {% else %}
           {% for n in decl.numbers %}
-            <td>{{ (decl.cells.get((c, n, decl.single_gender)) or decl.cells.get((c, n, "")) or []) | unique | join(", ") or "—" }}</td>
+            {{ cell(decl.cells.get((c, n, decl.single_gender)) or decl.cells.get((c, n, ""))) }}
           {% endfor %}
         {% endif %}
       </tr>
@@ -74,8 +94,8 @@
         <tr>
           <th>{{ _TENSE_LABEL.get(row.tense, row.tense) }}</th>
           {# grid is [number_row][person_col]: [Sing[1,2,3], Plur[1,2,3]] #}
-          {% for p in [0, 1, 2] %}<td>{{ (grid[0][p] or []) | unique | join(", ") or "—" }}</td>{% endfor %}
-          {% for p in [0, 1, 2] %}<td>{{ (grid[1][p] or []) | unique | join(", ") or "—" }}</td>{% endfor %}
+          {% for p in [0, 1, 2] %}{{ cell(grid[0][p]) }}{% endfor %}
+          {% for p in [0, 1, 2] %}{{ cell(grid[1][p]) }}{% endfor %}
         </tr>
         {% endif %}
       {% endfor %}
@@ -91,7 +111,7 @@
     {% for r in block.rows %}
       <tr>
         <th>{{ r.label }}</th>
-        <td>{{ (r.forms or []) | unique | join(", ") }}</td>
+        {{ cell(r.forms) }}
       </tr>
     {% endfor %}
     </tbody>
