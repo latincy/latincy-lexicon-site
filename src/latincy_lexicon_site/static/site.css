@@ -205,3 +205,72 @@ form.lookup button:hover { opacity: 0.9; }
   margin: 1rem 0;
   font-size: 0.95rem;
 }
+
+.paradigm-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0.4rem 0 1.25rem 0;
+}
+.paradigm-scroll > .paradigm-table { margin: 0; }
+
+@media (max-width: 640px) {
+  body { margin: 1rem auto; }
+  h1 { font-size: 1.6rem; }
+
+  /* Sentence table → stacked cards. Each <tr> becomes a card; each <td>
+     gets its column header inlined via data-label. The expand-row and any
+     injected flag-panel-row span full width without a label. */
+  .sentence-table,
+  .sentence-table tbody,
+  .sentence-table tr,
+  .sentence-table td {
+    display: block;
+    width: 100%;
+  }
+  .sentence-table thead { display: none; }
+  .sentence-table tr {
+    border: 1px solid #e3e3e3;
+    border-radius: 6px;
+    margin: 0.6rem 0;
+    padding: 0.5rem 0.75rem;
+  }
+  .sentence-table tr.expand-row,
+  .sentence-table tr.flag-panel-row {
+    border: none;
+    padding: 0;
+    margin: 0;
+  }
+  .sentence-table td {
+    border: none;
+    padding: 0.2rem 0;
+  }
+  .sentence-table td[data-label]::before {
+    content: attr(data-label);
+    display: inline-block;
+    min-width: 5.5rem;
+    color: #666;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .sentence-table td.row-actions {
+    margin-top: 0.4rem;
+    padding-top: 0.4rem;
+    border-top: 1px solid #eee;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .sentence-table tr.expand-row td:empty { display: none; }
+
+  /* Paradigm tables: keep the grid intact but allow horizontal pan, with
+     the row-label column pinned so callers can read across. */
+  .paradigm-table { min-width: 0; }
+  .paradigm-scroll .paradigm-table tbody th,
+  .paradigm-scroll .paradigm-table thead th:first-child {
+    position: sticky;
+    left: 0;
+    background: #fafafa;
+    z-index: 1;
+  }
+}

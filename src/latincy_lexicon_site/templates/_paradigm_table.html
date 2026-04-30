@@ -38,6 +38,7 @@
 
 {% macro render_decl(decl) %}
   {% if decl.cases %}
+  <div class="paradigm-scroll">
   <table class="paradigm-table">
     <thead>
       <tr>
@@ -72,6 +73,7 @@
       {% endfor %}
     </tbody>
   </table>
+  </div>
   {% endif %}
 {% endmacro %}
 
@@ -79,6 +81,7 @@
   <h3>{{ block.title }}</h3>
   {% for v in block.voices %}
     <h4>{{ _VOICE_LABEL.get(v, v) }}</h4>
+    <div class="paradigm-scroll">
     <table class="paradigm-table">
       <thead>
         <tr>
@@ -101,11 +104,13 @@
       {% endfor %}
       </tbody>
     </table>
+    </div>
   {% endfor %}
 {% endmacro %}
 
 {% macro render_list(block) %}
   <h3>{{ block.title }}</h3>
+  <div class="paradigm-scroll">
   <table class="paradigm-table paradigm-list">
     <tbody>
     {% for r in block.rows %}
@@ -116,6 +121,7 @@
     {% endfor %}
     </tbody>
   </table>
+  </div>
 {% endmacro %}
 
 {% macro render_decl_block(block) %}

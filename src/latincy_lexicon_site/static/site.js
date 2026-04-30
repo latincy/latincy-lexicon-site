@@ -1,3 +1,15 @@
+// On the landing page the lookup input is autofocused with a prefilled
+// example, which puts the caret at the end and scrolls narrow inputs past
+// the start of the value. Reset to the start so the example reads "Poeta…"
+// rather than "…scribit." on mobile.
+{
+  const input = document.querySelector("form.lookup input[type='text']");
+  if (input && input.value) {
+    input.setSelectionRange(0, 0);
+    input.scrollLeft = 0;
+  }
+}
+
 // Chevron toggle for per-token expanders on /sentence.
 //
 // First click: HTMX fetches the fragment; htmx:afterSwap flips the button
