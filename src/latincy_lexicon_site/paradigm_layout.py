@@ -392,18 +392,58 @@ def _decline(items: list[dict]) -> dict[str, Any]:
 
 
 def _layout_other(forms: list[dict]) -> dict[str, Any]:
-    """Fallback: list every form. Used for closed-class / unknown POS."""
+    """Fallback: list every form. Used for closed-class / unknown POS.
+
+    Indeclinables (e.g. `cum`) commonly arrive with empty-string forms and
+    many byte-identical entries; drop empties and collapse exact (form,
+    upos, feats) duplicates. Each surviving row carries a label like
+    ``ADP, Case=Abl`` so users can tell distinct readings of the same
+    surface (preposition vs adverb) apart in the rendered list.
+
+    Also drops the synthetic ADV ``Degree=Cmp``/``Degree=Sup`` rows that
+    the library emits for every adverb regardless of whether the word
+    actually compares: if their surface equals a bare/``Degree=Pos`` ADV
+    row, they're not real comparatives (e.g. *cum* never becomes *cumius*)
+    and clutter the table. Genuinely comparable adverbs like *celeriter
+    / celerius / celerrime* keep all three rows because their surfaces
+    differ.
+    """
+    # Build the set of (upos, form) pairs that have a bare or Pos degree
+    # reading — any Cmp/Sup form whose surface is already in this set is
+    # synthetic and gets dropped.
+    bare_or_pos: set[tuple[str, str]] = set()
+    for f in forms:
+        if not f.get("form"):
+            continue
+        deg = (f.get("feats") or {}).get("Degree")
+        if deg in (None, "Pos"):
+            bare_or_pos.add((f.get("upos") or "", f["form"]))
+
+    rows: list[dict] = []
+    seen: set[tuple] = set()
+    for f in forms:
+        form_val = f.get("form") or ""
+        if not form_val:
+            continue
+        upos = f.get("upos") or ""
+        feats = f.get("feats") or {}
+        deg = feats.get("Degree")
+        if deg in ("Cmp", "Sup") and (upos, form_val) in bare_or_pos:
+            continue
+        key = (form_val, upos, tuple(sorted(feats.items())))
+        if key in seen:
+            continue
+        seen.add(key)
+        feat_str = ", ".join(f"{k}={v}" for k, v in feats.items())
+        label = ", ".join(part for part in (upos, feat_str) if part)
+        rows.append({"label": label, "forms": [form_val]})
+    surfaces = {r["forms"][0] for r in rows}
+    title = "Indeclinable" if len(surfaces) == 1 else "Forms"
     return {
         "kind": "other",
-        "blocks": [
-            {
-                "kind": "list",
-                "title": "Forms",
-                "rows": [{"label": "", "forms": [f["form"]]} for f in forms],
-            }
-        ],
+        "blocks": [{"kind": "list", "title": title, "rows": rows}],
         "alternates": [],
-        "total": len(forms),
+        "total": len(rows),
     }
 
 

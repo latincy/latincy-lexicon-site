@@ -2,13 +2,15 @@
 {% block title %}{{ result.lemma }} — paradigm | LatinCy Lexicon{% endblock %}
 
 {% block content %}
-<h1><span class="paradigm-lemma">{{ result.lemma }}</span>{% if result.paradigms and result.paradigms[0].entry and result.paradigms[0].entry.pos %}
+<h1>{{ result.lemma }}{% if result.paradigms and result.paradigms[0].entry and result.paradigms[0].entry.pos %}
   <small title="Whitaker POS: {{ result.paradigms[0].entry.pos }}">({{ result.paradigms[0].entry.pos | pos_label }})</small>
 {% elif result.pos %}
   <small>({{ result.pos | lower }})</small>
 {% endif %}</h1>
 {% if result.query and result.query != result.lemma %}
-  <p class="paradigm-query-note">Showing the paradigm for <strong>{{ result.lemma }}</strong> — your query <strong class="paradigm-query-form">{{ result.query }}</strong> is highlighted below.</p>
+  <p class="paradigm-query-note">Showing the paradigm for <strong>{{ result.lemma }}</strong> — your query <strong class="paradigm-query-form">{{ result.query }}</strong>{% if result.query_gloss %} <span class="paradigm-query-gloss">({{ result.query_gloss }})</span>{% endif %} is highlighted below.</p>
+{% elif result.query_gloss %}
+  <p class="paradigm-query-note"><strong class="paradigm-query-form">{{ result.lemma }}</strong> <span class="paradigm-query-gloss">({{ result.query_gloss }})</span></p>
 {% endif %}
 {% if result.paradigms | length > 1 %}
   <p class="paradigm-homonym-note"><em>{{ result.lemma }}</em> is shared by {{ result.paradigms | length }} distinct verbs; their paradigms are shown separately below.</p>

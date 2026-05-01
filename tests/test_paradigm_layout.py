@@ -347,3 +347,94 @@ def test_noun_collapses_gender_dimension():
     decl = out["blocks"][0]["decl"]
     assert decl["genders"] is None  # collapsed
     assert decl["cells"][("Nom", "Plur", "")] == ["viri", "vira"]
+
+
+def test_other_layout_drops_spurious_adv_degrees_when_form_unchanged():
+    """The lexicon emits Pos/Cmp/Sup degree forms for every ADV reading,
+    but indeclinables like `cum` don't actually inflect — the Cmp/Sup
+    rows have the same surface as the bare/Pos row. Drop them so the
+    user doesn't see three identical 'cum (Cmp)' / 'cum (Sup)' rows for
+    a non-comparable adverb. A real adverb like *celeriter* keeps all
+    three because its degrees have different surfaces."""
+    forms = [
+        {"form": "cum", "upos": "ADV", "feats": {}},
+        {"form": "cum", "upos": "ADV", "feats": {"Degree": "Pos"}},
+        {"form": "cum", "upos": "ADV", "feats": {"Degree": "Cmp"}},
+        {"form": "cum", "upos": "ADV", "feats": {"Degree": "Sup"}},
+    ]
+    out = labels = layout_paradigm(forms, "ADV")
+    rows = out["blocks"][0]["rows"]
+    labels = [r["label"] for r in rows]
+    assert not any("Cmp" in lbl for lbl in labels), (
+        f"spurious Cmp row not dropped: {labels}"
+    )
+    assert not any("Sup" in lbl for lbl in labels), (
+        f"spurious Sup row not dropped: {labels}"
+    )
+
+
+def test_other_layout_keeps_real_adv_degrees_when_forms_differ():
+    """A genuinely comparable adverb (different surface per degree)
+    keeps all three rows."""
+    forms = [
+        {"form": "celeriter", "upos": "ADV", "feats": {"Degree": "Pos"}},
+        {"form": "celerius", "upos": "ADV", "feats": {"Degree": "Cmp"}},
+        {"form": "celerrime", "upos": "ADV", "feats": {"Degree": "Sup"}},
+    ]
+    out = layout_paradigm(forms, "ADV")
+    rows = out["blocks"][0]["rows"]
+    assert len(rows) == 3
+    forms_seen = {r["forms"][0] for r in rows}
+    assert forms_seen == {"celeriter", "celerius", "celerrime"}
+
+
+def test_other_layout_titles_block_indeclinable_when_one_surface():
+    """When every surviving row shares the same surface form, the block
+    is titled "Indeclinable" instead of the generic "Forms" — gives the
+    user an at-a-glance signal that the word doesn't inflect."""
+    forms = [
+        {"form": "cum", "upos": "ADV", "feats": {}},
+        {"form": "cum", "upos": "ADP", "feats": {"Case": "Gen"}},
+        {"form": "cum", "upos": "ADP", "feats": {"Case": "Abl"}},
+    ]
+    out = layout_paradigm(forms, "ADV")
+    assert out["blocks"][0]["title"] == "Indeclinable"
+
+
+def test_other_layout_keeps_forms_title_when_surfaces_differ():
+    """Multiple distinct surfaces -> title stays as 'Forms'."""
+    forms = [
+        {"form": "celeriter", "upos": "ADV", "feats": {"Degree": "Pos"}},
+        {"form": "celerius", "upos": "ADV", "feats": {"Degree": "Cmp"}},
+        {"form": "celerrime", "upos": "ADV", "feats": {"Degree": "Sup"}},
+    ]
+    out = layout_paradigm(forms, "ADV")
+    assert out["blocks"][0]["title"] == "Forms"
+
+
+def test_other_layout_drops_empty_forms_and_dedupes():
+    """Indeclinables/closed-class words (e.g. `cum`) get the `other` layout.
+    The library can synthesize empty-string forms and many duplicates of
+    the same surface; the layout must drop empties and collapse rows that
+    share the same (form, feats), so the user doesn't see eight blank
+    `cum` rows or stray empty cells."""
+    forms = [
+        {"form": "cum", "upos": "ADV", "feats": {}},
+        {"form": "", "upos": "ADV", "feats": {}},
+        {"form": "cum", "upos": "ADV", "feats": {"Degree": "Pos"}},
+        {"form": "cum", "upos": "ADV", "feats": {"Degree": "Pos"}},  # exact dupe
+        {"form": "cum", "upos": "ADP", "feats": {"Case": "Abl"}},
+        {"form": "cum", "upos": "ADP", "feats": {"Case": "Acc"}},
+    ]
+    out = layout_paradigm(forms, "ADV")
+    rows = out["blocks"][0]["rows"]
+    assert all(r["forms"] and r["forms"][0] for r in rows), (
+        "no row should have an empty form"
+    )
+    # Exact (form, feats) duplicates collapse
+    assert len(rows) == 4
+    # Each row carries a label that surfaces upos / feats so the user can
+    # tell ADV-Degree=Pos from ADP-Case=Abl readings of the same surface.
+    labels = [r["label"] for r in rows]
+    assert any("ADP" in lbl and "Abl" in lbl for lbl in labels)
+    assert any("ADV" in lbl for lbl in labels)
