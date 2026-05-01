@@ -8,8 +8,10 @@
 </p>
 
 <form action="/sentence" method="get" class="lookup">
+  <label for="text" class="visually-hidden">Latin sentence or word to look up</label>
   <input type="text" id="text" name="text"
          value="Poeta bonus carmina scribit."
+         lang="la"
          required autofocus>
   <button type="submit">Look up</button>
 </form>

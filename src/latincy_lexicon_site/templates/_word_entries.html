@@ -3,7 +3,7 @@
 {% else %}
   {% for entry in result.analyses %}
     <article class="entry{% if entry.top_sense %} entry--top-sense{% endif %}">
-      <h3>{{ entry.headword or entry.lemma or "?" }} <small title="Whitaker POS: {{ entry.pos or "?" }}">({{ entry.pos | pos_label or "?" }})</small>{% if entry.top_sense %} <span class="pos-match-badge" title="Top-ranked sense for this token">✓</span>{% endif %}</h3>
+      <h3><span lang="la">{{ entry.headword or entry.lemma or "?" }}</span> <small title="Whitaker POS: {{ entry.pos or "?" }}">({{ entry.pos | pos_label or "?" }})</small>{% if entry.top_sense %} <span class="pos-match-badge" title="Top-ranked sense for this token" aria-label="Top-ranked sense for this token">✓</span>{% endif %}</h3>
       {% set pp = entry | principal_parts %}
       {% if pp %}
         <p><strong>Principal parts:</strong> {{ pp }}</p>
@@ -38,6 +38,8 @@
       {% if flags_enabled %}
         <p>
           <button class="flag-btn"
+                  aria-haspopup="dialog"
+                  aria-expanded="false"
                   data-target-type="word"
                   data-subject="{{ result.form }}"
                   data-target-ref="entry:{{ entry.headword or entry.lemma or '?' }}">

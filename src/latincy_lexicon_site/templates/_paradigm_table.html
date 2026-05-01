@@ -27,7 +27,7 @@
     <td>—</td>
   {%- else -%}
     {%- set is_hit = query and query in forms -%}
-    <td{% if is_hit %} class="paradigm-hit"{% endif %}>
+    <td lang="la"{% if is_hit %} class="paradigm-hit"{% endif %}>
     {%- for f in forms -%}
       {%- if f == query -%}<mark>{{ f }}</mark>{%- else -%}{{ f }}{%- endif -%}
       {%- if not loop.last %}, {% endif -%}
@@ -152,7 +152,7 @@
     <summary>Alternate forms ({{ layout.alternates | length }})</summary>
     <ul>
     {% for a in layout.alternates %}
-      <li><strong>{{ a.form }}</strong> <small>{{ a.feats }}</small></li>
+      <li><strong lang="la">{{ a.form }}</strong> <small>{{ a.feats }}</small></li>
     {% endfor %}
     </ul>
   </details>

@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="LatinCy Lexicon — Latin sentence analysis, dictionary lookup, and inflectional paradigms powered by LatinCy + Whitaker's Words.">
   <title>{% block title %}LatinCy Lexicon{% endblock %}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,13 +14,14 @@
   <script src="/static/site.js?v={{ site_version }}" defer></script>
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
   <header>
     <a href="/" class="brand">LatinCy <span class="brand-lexicon">Lexicon</span></a>
     <nav>
       <a href="/docs">API docs</a>
     </nav>
   </header>
-  <main>
+  <main id="main-content">
     {% block content %}{% endblock %}
   </main>
   <footer>

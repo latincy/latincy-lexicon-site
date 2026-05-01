@@ -102,8 +102,12 @@ async function submitFlag(btn, panel) {
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const body = await res.json();
-    panel.innerHTML = `<p class="flag-thanks">Thanks — logged as #${body.id}.</p>`;
-    btn.setAttribute("aria-expanded", "false");
+    // Update the live region (don't replace the whole panel) so AT actually
+    // announces the success message instead of seeing the live region vanish.
+    status.textContent = `Thanks — logged as #${body.id}.`;
+    panel.querySelector(".flag-issue").disabled = true;
+    panel.querySelector(".flag-note").disabled = true;
+    panel.querySelector(".flag-submit").disabled = true;
     btn.disabled = true;
   } catch (err) {
     status.textContent = `couldn't send (${err.message})`;

@@ -9,7 +9,7 @@
     {{ word_cap }} below.
   </p>
 {% endif %}
-<blockquote>{{ result.text }}</blockquote>
+<blockquote lang="la">{{ result.text }}</blockquote>
 
 <table class="sentence-table">
   <thead>
@@ -20,8 +20,8 @@
   <tbody>
   {% for tok in result.tokens %}
     <tr>
-      <td data-label="Token"><strong>{{ tok.text }}</strong></td>
-      <td data-label="Lemma">{{ tok.lemma }}</td>
+      <td data-label="Token"><strong lang="la">{{ tok.text }}</strong></td>
+      <td data-label="Lemma" lang="la">{{ tok.lemma }}</td>
       <td data-label="POS" title="UPOS: {{ tok.pos }}">{{ tok.tag or tok.pos }}</td>
       <td data-label="Top gloss">
         {% if tok.entries and tok.entries[0].glosses %}
@@ -32,15 +32,19 @@
         <button class="expand-btn"
                 data-target="entry-{{ loop.index }}"
                 aria-expanded="false"
+                aria-controls="entry-{{ loop.index }}"
                 aria-label="Toggle entry for {{ tok.text }}"
                 hx-get="/fragments/word/{{ tok.text }}?pos={{ tok.pos }}"
                 hx-target="#entry-{{ loop.index }}"
                 hx-swap="innerHTML">
           ▸
         </button>
-        <a href="/word/{{ tok.text }}">↗</a>
+        <a href="/word/{{ tok.text }}" aria-label="Open dedicated page for {{ tok.text }}">↗</a>
         {% if flags_enabled %}
           <button class="flag-btn"
+                  aria-label="Flag this token"
+                  aria-haspopup="dialog"
+                  aria-expanded="false"
                   data-target-type="sentence"
                   data-subject="{{ result.text }}"
                   data-target-ref="token:{{ loop.index0 }}:{{ tok.text }}">
@@ -49,7 +53,7 @@
         {% endif %}
       </td>
     </tr>
-    <tr class="expand-row"><td colspan="5" id="entry-{{ loop.index }}"></td></tr>
+    <tr class="expand-row"><td colspan="5" id="entry-{{ loop.index }}" aria-live="polite"></td></tr>
   {% endfor %}
   </tbody>
 </table>

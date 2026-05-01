@@ -2,7 +2,7 @@
 {% block title %}{{ result.form }} | LatinCy Lexicon{% endblock %}
 
 {% block content %}
-<h1>{{ result.form }}</h1>
+<h1 lang="la">{{ result.form }}</h1>
 {% if result.normalized != result.form %}
   <p><small>Normalized: <code>{{ result.normalized }}</code></small></p>
 {% endif %}
