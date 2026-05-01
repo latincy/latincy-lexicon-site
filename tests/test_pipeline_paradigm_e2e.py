@@ -33,7 +33,10 @@ def nlp_lg() -> Language:
         pytest.skip("la_core_web_lg not installed")
     except ValueError as exc:
         if "E004" in str(exc):
-            pytest.skip("la_core_web_lg conflicts with sm in same process; run lg test in isolation")
+            pytest.skip(
+                "la_core_web_lg conflicts with sm in same process; "
+                "run lg test in isolation"
+            )
         raise
 
 

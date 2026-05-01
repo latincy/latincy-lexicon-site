@@ -9,7 +9,6 @@ Latin teachers say it.
 
 from __future__ import annotations
 
-
 _PERSON = {"1": "1st person", "2": "2nd person", "3": "3rd person"}
 _NUMBER = {"Sing": "singular", "Plur": "plural", "Dual": "dual"}
 _TENSE = {
