@@ -223,6 +223,7 @@ def analyze_paradigm_sync(nlp: Language, lemma: str, pos: str | None = None) -> 
     # other) reading still surfaces.
     if not forms and candidates:
         forms = _regenerate_unfiltered(nlp, resolved, pos)
+    _override_noun_gender(forms, candidates)
     paradigms = _group_paradigms(candidates, forms, pos)
     # Prefer the gloss that matches the rendered paradigm: find the
     # first form in any paradigm group whose surface equals the query
@@ -274,6 +275,33 @@ def _paradigm_forms(token, pos: str | None) -> list[dict]:
             continue
         out.append({"form": form_val, "upos": upos, "feats": feats})
     return out
+
+
+_WW_GENDER_TO_UD = {"M": "Masc", "F": "Fem", "N": "Neut"}
+
+
+def _override_noun_gender(forms: list[dict], candidates: list[dict]) -> None:
+    """The library's 1st-decl rule emits ``Gender=Com`` because the same
+    rule serves both M (*agricola*) and F (*cura*) nouns. The lexicon
+    entry records the actual gender; copy that onto the inflected forms
+    so the rendered paradigm and textbook gloss say "feminine" rather
+    than "common" for *cura*. Only fires when every candidate noun
+    entry agrees on a single M/F/N gender — mixed-gender homonyms keep
+    ``Com``.
+
+    Mutates ``forms`` in place.
+    """
+    noun_genders = {
+        e.get("gender") for e in candidates
+        if "NOUN" in (e.get("ud_pos") or [])
+    }
+    noun_genders = {g for g in noun_genders if g in _WW_GENDER_TO_UD}
+    if len(noun_genders) != 1:
+        return
+    target = _WW_GENDER_TO_UD[next(iter(noun_genders))]
+    for f in forms:
+        if f.get("upos") in ("NOUN", "PROPN") and f["feats"].get("Gender") == "Com":
+            f["feats"]["Gender"] = target
 
 
 def _regenerate_unfiltered(nlp: Language, lemma: str, pos: str | None) -> list[dict]:

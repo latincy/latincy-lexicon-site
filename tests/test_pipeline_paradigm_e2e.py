@@ -139,6 +139,26 @@ def test_unknown_token_returns_empty_paradigms(nlp: Language):
     assert isinstance(r["paradigms"], list)
 
 
+def test_noun_forms_carry_entry_gender_not_com(nlp: Language):
+    """The library's 1st-decl inflection rule is gender-agnostic and emits
+    ``Gender=Com``; the entry's recorded gender (F for *cura*) is more
+    specific and what a learner expects to see ("feminine"). When all
+    NOUN entries for a lemma agree on M/F/N, NOUN forms should carry
+    that gender instead of ``Com``."""
+    r = analyze_paradigm_sync(nlp, "cura")
+    noun_paradigms = [
+        p for p in r["paradigms"] if "NOUN" in (
+            (p.get("entry") or {}).get("ud_pos") or []
+        )
+    ]
+    assert noun_paradigms
+    forms = noun_paradigms[0]["forms"]
+    assert forms, "expected noun forms for cura"
+    genders = {f["feats"].get("Gender") for f in forms if f["feats"].get("Gender")}
+    assert "Com" not in genders, f"expected Com to be replaced, got {genders}"
+    assert "Fem" in genders, f"expected Fem in {genders}"
+
+
 def test_indeclinable_collapses_byte_identical_paradigms(nlp: Language):
     """`cum` has lexicon entries under multiple principal-parts groups
     (CCONJ/PART/SCONJ vs ADV) but the generated form-set is the same
