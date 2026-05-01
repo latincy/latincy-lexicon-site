@@ -6,6 +6,7 @@ from pathlib import Path
 
 from fastapi.templating import Jinja2Templates
 
+from . import __version__
 from .paradigm_layout import layout_paradigm
 from .pos_labels import pos_label
 from .principal_parts import format_principal_parts
@@ -22,3 +23,4 @@ templates.env.filters["ww_source"] = ww_source
 templates.env.filters["principal_parts"] = format_principal_parts
 templates.env.filters["pos_label"] = pos_label
 templates.env.globals["layout_paradigm"] = layout_paradigm
+templates.env.globals["site_version"] = __version__
