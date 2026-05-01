@@ -1,7 +1,9 @@
 :root {
+  /* Brand: see ../latincy-project/docs/brand.md for canonical color +
+     typeface values. --accent is the Primary stop; #1d70c7 = 5.0:1 on
+     white (WCAG AA). Lexend is the LatinCy typeface across all
+     surfaces (replaced spaCy-aligned typeface in the 2026-05-01 reset). */
   font-family: "Lexend", -apple-system, system-ui, sans-serif;
-  /* Darker than the original #67abe4 so foreground text on white passes
-     WCAG AA 4.5:1 (#1d70c7 ≈ 5.0:1). Still recognizably LatinCy blue. */
   --accent: #1d70c7;
   --accent-text: #fff;
 }
