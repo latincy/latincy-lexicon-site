@@ -13,6 +13,8 @@ dependencies = [
     "pydantic>=2.8",
     "slowapi>=0.1.9",
     "structlog>=24.4",
+    "passlib[apache]>=1.7",
+    "python-multipart>=0.0.9",
     "spacy==3.8.11",
     "latincy-lexicon>=0.2.4",
 ]

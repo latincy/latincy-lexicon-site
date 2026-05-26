@@ -13,8 +13,10 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from starlette.middleware.sessions import SessionMiddleware
 
 from latincy_lexicon_site import __version__
+from latincy_lexicon_site.auth import auth_middleware
 from latincy_lexicon_site.cache import CachedAnalyzer, SqliteCache
 from latincy_lexicon_site.flags import FlagStore
 from latincy_lexicon_site.logging_setup import configure as configure_logging
@@ -97,6 +99,11 @@ def _cache_control_for(path: str) -> str | None:
 
 
 @app.middleware("http")
+async def _auth_check(request: Request, call_next):
+    return await auth_middleware(request, call_next)
+
+
+@app.middleware("http")
 async def log_and_cache_control(request: Request, call_next):
     start = time.perf_counter()
     response = await call_next(request)
@@ -119,14 +126,24 @@ async def log_and_cache_control(request: Request, call_next):
     return response
 
 from latincy_lexicon_site.routes import api as api_routes  # noqa: E402
+from latincy_lexicon_site.routes import auth as auth_routes  # noqa: E402
 from latincy_lexicon_site.routes import flags as flag_routes  # noqa: E402
 from latincy_lexicon_site.routes import fragments as fragment_routes  # noqa: E402
 from latincy_lexicon_site.routes import ui as ui_routes  # noqa: E402
 
+app.include_router(auth_routes.router)
 app.include_router(ui_routes.router)
 app.include_router(api_routes.router)
 app.include_router(fragment_routes.router)
 app.include_router(flag_routes.router)
+
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.environ.get("LATINCY_SITE_SESSION_SECRET", "dev-secret-change-in-prod"),
+    session_cookie="latincy_session",
+    max_age=60 * 60 * 24 * 7,  # 1 week
+    https_only=True,
+)
 
 app.mount(
     "/static",
