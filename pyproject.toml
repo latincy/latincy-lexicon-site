@@ -15,6 +15,7 @@ dependencies = [
     "structlog>=24.4",
     "passlib[apache]>=1.7",
     "python-multipart>=0.0.9",
+    "itsdangerous>=2.0",
     "spacy==3.8.11",
     "latincy-lexicon>=0.2.4",
 ]
