@@ -17,7 +17,7 @@ dependencies = [
     "python-multipart>=0.0.9",
     "itsdangerous>=2.0",
     "spacy==3.8.11",
-    "latincy-lexicon>=0.2.4",
+    "latincy-lexicon>=0.3.0",
 ]
 
 [project.optional-dependencies]
@@ -28,10 +28,10 @@ dev = [
     "ruff>=0.6",
 ]
 models = [
-    "la_core_web_lg @ https://huggingface.co/latincy/la_core_web_lg/resolve/main/la_core_web_lg-3.9.0-py3-none-any.whl",
+    "la_core_web_lg @ https://huggingface.co/latincy/la_core_web_lg/resolve/main/la_core_web_lg-3.9.4-py3-none-any.whl",
 ]
 test-models = [
-    "la_core_web_sm @ https://huggingface.co/latincy/la_core_web_sm/resolve/main/la_core_web_sm-3.9.0-py3-none-any.whl",
+    "la_core_web_sm @ https://huggingface.co/latincy/la_core_web_sm/resolve/main/la_core_web_sm-3.9.4-py3-none-any.whl",
 ]
 
 [build-system]
