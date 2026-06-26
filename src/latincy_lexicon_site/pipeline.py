@@ -56,7 +56,7 @@ def _build_lexicon_artifacts() -> tuple[Path, Path]:
 
 def load_pipeline(model_name: str = "la_core_web_lg") -> Language:
     """Load a LatinCy model with pruned pipes + lexicon components attached."""
-    nlp = spacy.load(model_name, disable=_PRUNE)
+    nlp = spacy.load(model_name, exclude=_PRUNE)
 
     lexicon_path, analyzer_path = _build_lexicon_artifacts()
     nlp.add_pipe(
