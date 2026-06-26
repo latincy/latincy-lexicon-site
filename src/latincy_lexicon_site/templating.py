@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from importlib.metadata import version as pkg_version
 from pathlib import Path
 
 from fastapi.templating import Jinja2Templates
@@ -24,3 +25,4 @@ templates.env.filters["principal_parts"] = format_principal_parts
 templates.env.filters["pos_label"] = pos_label
 templates.env.globals["layout_paradigm"] = layout_paradigm
 templates.env.globals["site_version"] = __version__
+templates.env.globals["lexicon_version"] = pkg_version("latincy-lexicon")

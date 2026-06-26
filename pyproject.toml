@@ -1,6 +1,6 @@
 [project]
 name = "latincy-lexicon-site"
-version = "0.1.18"
+version = "0.1.19"
 description = "FastAPI lookup service for Latin dictionary entries, sentence analysis, and inflectional paradigms."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -17,7 +17,7 @@ dependencies = [
     "python-multipart>=0.0.9",
     "itsdangerous>=2.0",
     "spacy==3.8.11",
-    "latincy-lexicon>=0.3.0",
+    "latincy-lexicon>=0.5.0",
 ]
 
 [project.optional-dependencies]
