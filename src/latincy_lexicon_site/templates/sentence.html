@@ -22,7 +22,7 @@
     <tr>
       <td data-label="Token"><strong lang="la">{{ tok.text }}</strong></td>
       <td data-label="Lemma" lang="la">{{ tok.lemma }}</td>
-      <td data-label="POS" title="UPOS: {{ tok.pos }}">{{ tok.tag or tok.pos }}</td>
+      <td data-label="POS" title="UPOS: {{ tok.pos }}{% if tok.tag %} · tag: {{ tok.tag }}{% endif %}">{{ tok.pos | upos_label }}</td>
       <td data-label="Top gloss">
         {% if tok.entries and tok.entries[0].glosses %}
           {{ tok.entries[0].glosses[0] if tok.entries[0].glosses is iterable else tok.entries[0].glosses }}

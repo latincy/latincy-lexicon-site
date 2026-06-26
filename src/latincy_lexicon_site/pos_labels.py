@@ -26,7 +26,32 @@ POS_LABELS: dict[str, str] = {
 }
 
 
+UPOS_LABELS: dict[str, str] = {
+    "NOUN": "noun",
+    "VERB": "verb",
+    "AUX": "verb",
+    "ADJ": "adj.",
+    "ADV": "adv.",
+    "ADP": "prep.",
+    "CCONJ": "conj.",
+    "SCONJ": "conj.",
+    "PRON": "pronoun",
+    "PROPN": "proper noun",
+    "NUM": "numeral",
+    "INTJ": "interj.",
+    "PART": "particle",
+    "DET": "det.",
+    "X": "unknown",
+}
+
+
 def pos_label(code: str | None) -> str:
     if not code:
         return ""
     return POS_LABELS.get(code, code)
+
+
+def upos_label(code: str | None) -> str:
+    if not code:
+        return ""
+    return UPOS_LABELS.get(code, code.lower())

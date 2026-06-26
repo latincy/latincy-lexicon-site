@@ -9,7 +9,7 @@ from fastapi.templating import Jinja2Templates
 
 from . import __version__
 from .paradigm_layout import layout_paradigm
-from .pos_labels import pos_label
+from .pos_labels import pos_label, upos_label
 from latincy_lexicon import format_principal_parts
 from .ww_codes import ww_age, ww_area, ww_freq, ww_geo, ww_source
 
@@ -23,6 +23,7 @@ templates.env.filters["ww_geo"] = ww_geo
 templates.env.filters["ww_source"] = ww_source
 templates.env.filters["principal_parts"] = format_principal_parts
 templates.env.filters["pos_label"] = pos_label
+templates.env.filters["upos_label"] = upos_label
 templates.env.globals["layout_paradigm"] = layout_paradigm
 templates.env.globals["site_version"] = __version__
 templates.env.globals["lexicon_version"] = pkg_version("latincy-lexicon")
