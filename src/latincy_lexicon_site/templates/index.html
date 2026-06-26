@@ -1,22 +1,22 @@
 {% extends "base.html" %}
 
 {% block content %}
-<p class="lede">
-  Enter a Latin word in any form to look up its dictionary entry.
+<p class="beta-notice">
+  <strong>Work in progress.</strong> This site is an experimental Latin dictionary
+  resolver combining <a href="https://huggingface.co/latincy">LatinCy</a> NLP with
+  <a href="https://mk270.github.io/whitakers-words/">Whitaker's Words</a>.
+  Results may be incomplete or incorrect.
 </p>
 
-<form action="/word/" method="get" class="lookup" onsubmit="this.action='/word/'+encodeURIComponent(this.elements['form'].value.trim()); this.elements['form'].name=''; return true;">
-  <label for="word-input" class="visually-hidden">Latin word to look up</label>
-  <input type="text" id="word-input" name="form"
+<p class="lede">Enter a Latin word in any form to look up its dictionary entry.</p>
+
+<form class="lookup" onsubmit="window.location='/word/'+encodeURIComponent(this.elements['q'].value.trim()); return false;">
+  <label for="word-input" class="visually-hidden">Latin word</label>
+  <input type="text" id="word-input" name="q"
          placeholder="e.g. amabam"
-         lang="la"
-         required autofocus>
+         lang="la" required autofocus>
   <button type="submit">Look up</button>
 </form>
 
-<p><small>Examples:
-  <a href="/word/amabam">amabam</a> ·
-  <a href="/word/arma">arma</a> ·
-  <a href="/word/pulchrae">pulchrae</a>
-</small></p>
+<p><small>Try: <a href="/word/amabam">amabam</a></small></p>
 {% endblock %}
