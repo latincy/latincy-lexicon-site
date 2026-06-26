@@ -6,5 +6,13 @@
 {% if result.normalized != result.form %}
   <p><small>Normalized: <code>{{ result.normalized }}</code></small></p>
 {% endif %}
+
+<p class="beta-notice">
+  <strong>Beta.</strong> This site is an experimental resolver combining
+  <a href="https://huggingface.co/latincy">LatinCy</a> NLP with
+  <a href="https://mk270.github.io/whitakers-words/">Whitaker's Words</a>.
+  Lemmatization and gloss results may be incomplete or incorrect.
+</p>
+
 {% include "_word_entries.html" %}
 {% endblock %}

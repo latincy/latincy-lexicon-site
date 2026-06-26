@@ -2,23 +2,21 @@
 
 {% block content %}
 <p class="lede">
-  Enter a <strong>sentence</strong> (up to 50 words) for token-level analysis
-  with dictionary entries, or a <strong>single word</strong> in any form to
-  jump straight to its entry and paradigm.
+  Enter a Latin word in any form to look up its dictionary entry.
 </p>
 
-<form action="/sentence" method="get" class="lookup">
-  <label for="text" class="visually-hidden">Latin sentence or word to look up</label>
-  <input type="text" id="text" name="text"
-         value="Poeta bonus carmina scribit."
+<form action="/word/" method="get" class="lookup" onsubmit="this.action='/word/'+encodeURIComponent(this.elements['form'].value.trim()); this.elements['form'].name=''; return true;">
+  <label for="word-input" class="visually-hidden">Latin word to look up</label>
+  <input type="text" id="word-input" name="form"
+         placeholder="e.g. amabam"
          lang="la"
          required autofocus>
   <button type="submit">Look up</button>
 </form>
 
 <p><small>Examples:
-  <a href="/sentence?text=arma+virumque+cano">arma virumque cano</a> ·
   <a href="/word/amabam">amabam</a> ·
-  <a href="/paradigm/amo">paradigm for <em>amo</em></a>
+  <a href="/word/arma">arma</a> ·
+  <a href="/word/pulchrae">pulchrae</a>
 </small></p>
 {% endblock %}
