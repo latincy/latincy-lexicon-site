@@ -10,7 +10,7 @@
 
 <p class="lede">Enter a Latin word in any form to look up its dictionary entry.</p>
 
-<form class="lookup" onsubmit="window.location='/word/'+encodeURIComponent(this.elements['q'].value.trim()); return false;">
+<form class="lookup" onsubmit="window.location='/word/'+encodeURIComponent(this.elements['q'].value.trim().split(/\s+/)[0]); return false;">
   <label for="word-input" class="visually-hidden">Latin word</label>
   <input type="text" id="word-input" name="q"
          placeholder="e.g. amabam"
