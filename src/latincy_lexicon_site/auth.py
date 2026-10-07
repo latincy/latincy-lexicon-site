@@ -13,6 +13,11 @@ _PUBLIC_PATHS = frozenset({"/login", "/healthz"})
 _PUBLIC_PREFIXES = ("/static/",)
 
 
+def auth_required() -> bool:
+    """Login gate is on by default; set LATINCY_SITE_REQUIRE_AUTH=0 to open the site."""
+    return os.environ.get("LATINCY_SITE_REQUIRE_AUTH", "1").lower() not in {"0", "false", "no", "off"}
+
+
 def _htpasswd() -> HtpasswdFile:
     path = Path(os.environ.get("LATINCY_SITE_HTPASSWD", "/var/lib/latincy-lexicon-site/htpasswd"))
     return HtpasswdFile(path)
@@ -28,6 +33,8 @@ def verify_credentials(username: str, password: str) -> bool:
 
 
 async def auth_middleware(request: Request, call_next):
+    if not auth_required():
+        return await call_next(request)
     path = request.url.path
     if path in _PUBLIC_PATHS or any(path.startswith(p) for p in _PUBLIC_PREFIXES):
         return await call_next(request)
