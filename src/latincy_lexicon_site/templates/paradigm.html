@@ -16,7 +16,6 @@
   <p class="paradigm-homonym-note"><em>{{ result.lemma }}</em> is shared by {{ result.paradigms | length }} distinct verbs; their paradigms are shown separately below.</p>
 {% endif %}
 
-{% include "_wip_notice.html" %}
 
 {% for paradigm in result.paradigms %}
   {% set entry = paradigm.entry %}

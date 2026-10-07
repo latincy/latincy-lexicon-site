@@ -23,6 +23,7 @@
       {% if auth_required() %}<a href="/logout">Sign out</a>{% endif %}
     </nav>
   </header>
+  {% include "_wip_notice.html" %}
   <main id="main-content">
     {% block content %}{% endblock %}
   </main>
