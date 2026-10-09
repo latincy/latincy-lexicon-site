@@ -226,14 +226,6 @@ form.lookup button:hover { opacity: 0.9; }
 }
 .flag-status { color: #666; font-size: 0.85rem; }
 .flag-thanks { margin: 0; color: #555; font-size: 0.9rem; }
-.beta-notice {
-  background: #f0f4ff;
-  border-left: 3px solid #6b8dd6;
-  padding: 0.5rem 0.75rem;
-  margin: 0.75rem 0 1.25rem;
-  font-size: 0.9rem;
-  color: #444;
-}
 .notice {
   background: #fff8e6;
   border-left: 3px solid #d9a441;
@@ -241,6 +233,26 @@ form.lookup button:hover { opacity: 0.9; }
   margin: 1rem 0;
   font-size: 0.95rem;
 }
+
+.wip-notice {
+  background: #fff3cd;
+  border: 2px solid #b26a00;
+  border-radius: 4px;
+  color: #4d2e00;
+  padding: 0.6rem 0.9rem;
+  margin: 1rem 0;
+  font-size: 0.95rem;
+}
+.wip-notice p { margin: 0; }
+.wip-notice a { color: #4d2e00; }
+.wip-notice .wip-label {
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+.wip-notice .wip-label::before { content: "\26A0\FE0E\00a0"; }
 
 .paradigm-scroll {
   overflow-x: auto;

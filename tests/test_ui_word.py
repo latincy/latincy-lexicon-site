@@ -30,3 +30,10 @@ def test_word_page_renders_principal_parts_reconstructed(client):
     assert "scribo, scribere, scripsi, scriptum" in r.text
     # Raw stems should NOT appear as the principal-parts line
     assert "scrib, scrib, scrips, script" not in r.text
+
+
+def test_word_page_links_to_paradigm_with_upos(client):
+    """Paradigm link uses the entry headword and a UPOS ?pos= (not Whitaker's code)."""
+    r = client.get("/word/amabam")
+    assert r.status_code == 200
+    assert 'href="/paradigm/amo?pos=VERB"' in r.text

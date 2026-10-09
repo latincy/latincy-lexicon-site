@@ -13,12 +13,12 @@ shape a Latin grammar would print:
   is a Gender × Case × Number table.
 - **Nouns** — Case × Number table with Gender as a header annotation.
 
-Forms whose features don't fit a standard cell are collected into an
-``alternates`` list rendered as an expandable section. This catches
-e.g. Plautine sigmatic future forms (``amasso, amassero``) that share
-features with the standard future indicative but use a different stem;
-v1 keeps them in the cell next to the canonical form rather than
-trying to disambiguate.
+Forms flagged non-canonical by latincy-lexicon (``form["alternate"]``) —
+Plautine sigmatic (``amasso``), archaic infinitives, defective-verb fake
+PPPs, wrong-stem artefacts — are collected into an ``alternates`` list
+rendered as an expandable section. The linguistic judgement lives upstream
+in the library (>=0.8.0); this module only buckets forms into the display
+grid and routes flagged ones aside.
 """
 
 from __future__ import annotations
@@ -40,20 +40,6 @@ _NOUN_CASE_ORDER = ["Nom", "Gen", "Dat", "Acc", "Abl", "Voc", "Loc"]
 _GENDER_ORDER = ["Masc", "Fem", "Neut", "Com"]
 _DEGREE_ORDER = ["Pos", "Cmp", "Sup"]
 
-# Future-perfect indicative endings (Active). Used to disambiguate the
-# library's collapsed Tense=Fut bucket — both `amabo` (canonical Future)
-# and `amavero` (canonical Future Perfect) come back tagged Tense=Fut.
-# A form starting with the perfect stem AND ending in one of these is a
-# Future Perfect; bare ending match alone would mis-grab `sum`'s `ero`.
-_FUT_PERF_ENDINGS = (
-    "erimus", "eritis", "erint", "erunt",
-    "erim", "eris", "erit", "ero", "ere",
-)
-
-# Tenses that build off the perfect stem. Forms tagged with one of these
-# but NOT starting with the canonical perfect stem are non-canonical
-# (Plautine sigmatic etc.) and routed to alternates.
-_PERF_SYS_TENSES = {"Past", "Pst", "Pqp", "FutP"}
 
 
 def layout_paradigm(
@@ -63,10 +49,9 @@ def layout_paradigm(
 ) -> dict[str, Any]:
     """Return a structured layout suitable for paradigm.html rendering.
 
-    ``entry`` is the lexicon entry for the lemma; verb layout uses its
-    principal-parts stems to route non-canonical forms (e.g. Plautine
-    sigmatic ``amasso``) into the alternates section. Adj/noun layouts
-    don't use it today.
+    ``entry`` (the lexicon entry) is accepted for backward compatibility but
+    no longer used for routing — non-canonical forms are identified by the
+    ``alternate`` flag the library sets on each form.
 
     Top-level keys:
       - kind: "verb" | "adj" | "noun" | "other"
@@ -95,8 +80,6 @@ def layout_paradigm(
 
 
 def _layout_verb(forms: list[dict], entry: dict | None = None) -> dict[str, Any]:
-    pres_stem, perf_stem, conj, has_real_ppp, sup_stem = _verb_stems(entry)
-
     finite: dict[tuple[str, str, str], dict[tuple[str, str], list[str]]] = {}
     infinitives: dict[tuple[str, str], list[str]] = {}
     participles: dict[tuple[str, str], list[dict]] = {}
@@ -111,35 +94,23 @@ def _layout_verb(forms: list[dict], entry: dict | None = None) -> dict[str, Any]
         if not form:
             continue
 
+        # latincy-lexicon (>=0.8.0) flags non-canonical forms — Plautine
+        # sigmatic (amasso), archaic infinitives (amarier), defective-verb
+        # fake PPPs (sum's futus), wrong-stem/wrong-conj artefacts. Route them
+        # to the alternates section without re-deriving the judgement here.
+        if f.get("alternate"):
+            alternates.append(_alt(f))
+            continue
+
         if vf == "Fin":
-            _route_finite(f, form, feats, pres_stem, perf_stem, conj, finite, alternates)
+            _route_finite(f, form, feats, finite, alternates)
         elif vf == "Inf":
             tense = feats.get("Tense", "Pres")
             voice = feats.get("Voice", "Act")
-            if _is_inf_alternate(form, tense, voice, perf_stem):
-                alternates.append(_alt(f))
-                continue
             infinitives.setdefault((tense, voice), []).append(form)
         elif vf == "Part":
             tense = feats.get("Tense", "Pres")
             voice = feats.get("Voice", "Act")
-            # Suppress the spurious "Perfect Passive" participle that the
-            # library generates for verbs without a real one (e.g. sum's
-            # `futus, futa, futum...` mechanically declined from the supine).
-            if (
-                tense == "Past"
-                and voice == "Pass"
-                and entry is not None
-                and not has_real_ppp
-            ):
-                alternates.append(_alt(f))
-                continue
-            # Filter participles built from the wrong stem — for homonyms
-            # like dico (dicere vs dicare), the library emits both
-            # dicens/dicans (Pres Act), dicturus/dicaturus (Fut Act), etc.
-            if _is_part_alternate(form, tense, voice, conj, pres_stem, sup_stem):
-                alternates.append(_alt(f))
-                continue
             participles.setdefault((tense, voice), []).append({
                 "form": form,
                 "case": feats.get("Case", ""),
@@ -159,6 +130,12 @@ def _layout_verb(forms: list[dict], entry: dict | None = None) -> dict[str, Any]
             })
         else:
             alternates.append(_alt(f))
+
+    # A real perfect passive participle exists iff a canonical one was routed
+    # into the participles bucket — the library flags the mechanically-declined
+    # fake PPP of defective verbs (sum's futus) as alternate, so it never lands
+    # here. Drives the periphrastic-passive / multiword-infinitive synthesis.
+    has_real_ppp = bool(participles.get(("Past", "Pass")))
 
     # Synthesize periphrastic perfect-system passives (amatus sum,
     # amatus eram, amatus ero, amatus sim, amatus essem) when the verb
@@ -566,9 +543,6 @@ def _route_finite(
     f: dict,
     form: str,
     feats: dict,
-    pres_stem: str,
-    perf_stem: str,
-    conj: int | None,
     finite: dict,
     alternates: list,
 ) -> None:
@@ -577,23 +551,11 @@ def _route_finite(
     voice = feats.get("Voice", "Act")
     person = feats.get("Person")
     number = feats.get("Number")
-    # Library tags both `amabo` (Fut) and `amavero` (FutP) as Tense=Fut;
-    # reclassify when form looks like a perfect-stem FutP. The perfect-stem
-    # guard prevents mis-grabbing `sum`'s canonical Future 1sg `ero`.
-    if (
-        tense == "Fut"
-        and perf_stem
-        and form.startswith(perf_stem)
-        and form.endswith(_FUT_PERF_ENDINGS)
-    ):
+    # The library emits Tense=Fut|Aspect=Perf for the future perfect (amavero);
+    # map it to the FutP display row (simple future amabo has no Aspect=Perf).
+    if tense == "Fut" and feats.get("Aspect") == "Perf":
         tense = "FutP"
     if not (mood and tense and person and number):
-        alternates.append(_alt(f))
-        return
-    if _is_finite_alternate(
-        form, mood, tense, conj, pres_stem, perf_stem,
-        person=person, number=number, voice=voice,
-    ):
         alternates.append(_alt(f))
         return
     finite.setdefault((mood, tense, voice), {}).setdefault(
@@ -601,276 +563,6 @@ def _route_finite(
     ).append(form)
 
 
-def _verb_stems(entry: dict | None) -> tuple[str, str, int | None, bool, str]:
-    """Extract (present_stem, perfect_stem, conj, has_real_ppp, supine_stem).
-
-    Whitaker's stem layout varies. 1st-conj entries are laid out as
-    [pres, pres, perf] (e.g. amo → ['am','am','amass']). Irregulars use
-    [pres, perf, sup] (e.g. sum → ['s','fu','fut']). 4-stem entries are
-    [pres, pres2, perf, sup] (e.g. audio → ['audi','aud','audiv','audit']).
-    Distinguish the 3-stem cases by checking whether stems[1] duplicates
-    the present (1st-conj-style) or whether stems[2] looks like a supine
-    derived from stems[1] (irregular-style).
-
-    1st-conj perfect is stored syncopated as ``-ass`` (from amasse etc.);
-    rewrite back to canonical ``-av`` so prefix matches catch ``amavero``.
-
-    ``has_real_ppp`` flags whether the verb has a true perfect passive
-    participle (e.g. ``amatus``). False for irregular verbs like sum
-    where the library mechanically declines the supine stem as if it
-    were a PPP, producing non-existent ``futus, futa, futum`` etc.
-
-    ``supine_stem`` is used to filter wrong-conj participles. For 4-stem
-    entries it's stems[3] (e.g. audit, dict). For 1st-conj 3-stem entries
-    it's synthesized as ``pres + 'at'`` (amat, portat). Empty when not
-    derivable.
-
-    Returns empty strings + conj=None + ppp=False + sup="" for missing.
-    """
-    if not entry:
-        return "", "", None, False, ""
-    hw = entry.get("headword") or ""
-    stems = entry.get("principal_parts") or []
-    if not hw or not stems:
-        return "", "", None, False, ""
-    conj = _detect_conj(hw, stems)
-    pres = stems[0]
-    perf, has_ppp = _select_perf_stem(pres, stems)
-    if conj == 1 and perf.endswith("ass"):
-        perf = perf[:-3] + "av"
-    sup = _select_supine_stem(pres, conj, stems, has_ppp)
-    return pres, perf, conj, has_ppp, sup
-
-
-def _select_supine_stem(pres: str, conj: int | None, stems: list[str], has_ppp: bool) -> str:
-    if len(stems) >= 4:
-        return stems[3]
-    if conj == 1 and pres and has_ppp:
-        return pres + "at"  # amat, portat — synthesized
-    return ""
-
-
-def _select_perf_stem(pres: str, stems: list[str]) -> tuple[str, bool]:
-    """Return (perfect_stem, has_real_ppp). See _verb_stems."""
-    if len(stems) >= 4:
-        return stems[2], True
-    if len(stems) == 3:
-        s1, s2 = stems[1], stems[2]
-        if s1 == pres:
-            return s2, True  # 1st-conj-style: stems[2] is perfect, supine implied
-        if s2.startswith(s1) and len(s2) > len(s1):
-            return s1, False  # irregular: stems[2] is supine, no real PPP
-        return s2, True
-    if len(stems) == 2:
-        return stems[1], False
-    return "", False
-
-
-def _detect_conj(hw: str, stems: list[str]) -> int | None:
-    """Mirror of principal_parts._detect_conj — kept local so layout
-    can stay independent. Returns 1, 2, 3, 4, or None.
-    """
-    if hw.endswith("eo"):
-        return 2
-    if hw.endswith("io"):
-        return 4
-    if hw.endswith("o"):
-        pres = stems[0] if stems else ""
-        perf = stems[2] if len(stems) >= 3 else ""
-        if perf and perf != pres and perf.startswith(pres):
-            suffix = perf[len(pres):]
-            if suffix in {"av", "ass", "at"}:
-                return 1
-        return 3
-    return None
-
-
-# Canonical suffixes after the present stem for present-system finite
-# forms, keyed by (conj, mood, tense, voice). Each value maps
-# (person, number) -> set of acceptable suffixes (some cells have
-# multiple, e.g. amaris/amare for Pres Ind Pass 2sg). Filters out
-# library artefacts like rego's bare-stem ``reg``, audio's wrong-stem
-# ``audbam``, and dico's 1st-conj-style ``dicas`` (mistagged).
-def _build_pres_sys_endings() -> dict[tuple[int, str, str, str], dict[tuple[str, str], set[str]]]:
-    out: dict[tuple[int, str, str, str], dict[tuple[str, str], set[str]]] = {}
-
-    def add(conj: int, mood: str, tense: str, voice: str, sufs: list, alts: dict | None = None):
-        cell = {
-            ("1", "Sing"): {sufs[0]}, ("2", "Sing"): {sufs[1]}, ("3", "Sing"): {sufs[2]},
-            ("1", "Plur"): {sufs[3]}, ("2", "Plur"): {sufs[4]}, ("3", "Plur"): {sufs[5]},
-        }
-        if alts:
-            for k, v in alts.items():
-                cell[k] = cell[k] | {v}
-        out[(conj, mood, tense, voice)] = cell
-
-    # ---- Conjugation 1 (am-) ----
-    add(1, "Ind", "Pres", "Act", ["o", "as", "at", "amus", "atis", "ant"])
-    add(1, "Ind", "Pres", "Pass", ["or", "aris", "atur", "amur", "amini", "antur"], {("2", "Sing"): "are"})
-    add(1, "Ind", "Imp", "Act", ["abam", "abas", "abat", "abamus", "abatis", "abant"])
-    add(1, "Ind", "Imp", "Pass", ["abar", "abaris", "abatur", "abamur", "abamini", "abantur"], {("2", "Sing"): "abare"})
-    add(1, "Ind", "Fut", "Act", ["abo", "abis", "abit", "abimus", "abitis", "abunt"])
-    add(1, "Ind", "Fut", "Pass", ["abor", "aberis", "abitur", "abimur", "abimini", "abuntur"], {("2", "Sing"): "abere"})
-    add(1, "Sub", "Pres", "Act", ["em", "es", "et", "emus", "etis", "ent"])
-    add(1, "Sub", "Pres", "Pass", ["er", "eris", "etur", "emur", "emini", "entur"], {("2", "Sing"): "ere"})
-    add(1, "Sub", "Imp", "Act", ["arem", "ares", "aret", "aremus", "aretis", "arent"])
-    add(1, "Sub", "Imp", "Pass", ["arer", "areris", "aretur", "aremur", "aremini", "arentur"], {("2", "Sing"): "arere"})
-    out[(1, "Imp", "Pres", "Act")] = {("2", "Sing"): {"a"}, ("2", "Plur"): {"ate"}}
-    out[(1, "Imp", "Pres", "Pass")] = {("2", "Sing"): {"are"}, ("2", "Plur"): {"amini"}}
-    out[(1, "Imp", "Fut", "Act")] = {("2", "Sing"): {"ato"}, ("3", "Sing"): {"ato"},
-                                       ("2", "Plur"): {"atote"}, ("3", "Plur"): {"anto"}}
-    out[(1, "Imp", "Fut", "Pass")] = {("2", "Sing"): {"ator"}, ("3", "Sing"): {"ator"}, ("3", "Plur"): {"antor"}}
-
-    # ---- Conjugation 2 (mon-) ----
-    add(2, "Ind", "Pres", "Act", ["eo", "es", "et", "emus", "etis", "ent"])
-    add(2, "Ind", "Pres", "Pass", ["eor", "eris", "etur", "emur", "emini", "entur"], {("2", "Sing"): "ere"})
-    add(2, "Ind", "Imp", "Act", ["ebam", "ebas", "ebat", "ebamus", "ebatis", "ebant"])
-    add(2, "Ind", "Imp", "Pass", ["ebar", "ebaris", "ebatur", "ebamur", "ebamini", "ebantur"], {("2", "Sing"): "ebare"})
-    add(2, "Ind", "Fut", "Act", ["ebo", "ebis", "ebit", "ebimus", "ebitis", "ebunt"])
-    add(2, "Ind", "Fut", "Pass", ["ebor", "eberis", "ebitur", "ebimur", "ebimini", "ebuntur"], {("2", "Sing"): "ebere"})
-    add(2, "Sub", "Pres", "Act", ["eam", "eas", "eat", "eamus", "eatis", "eant"])
-    add(2, "Sub", "Pres", "Pass", ["ear", "earis", "eatur", "eamur", "eamini", "eantur"], {("2", "Sing"): "eare"})
-    add(2, "Sub", "Imp", "Act", ["erem", "eres", "eret", "eremus", "eretis", "erent"])
-    add(2, "Sub", "Imp", "Pass", ["erer", "ereris", "eretur", "eremur", "eremini", "erentur"], {("2", "Sing"): "erere"})
-    out[(2, "Imp", "Pres", "Act")] = {("2", "Sing"): {"e"}, ("2", "Plur"): {"ete"}}
-    out[(2, "Imp", "Pres", "Pass")] = {("2", "Sing"): {"ere"}, ("2", "Plur"): {"emini"}}
-    out[(2, "Imp", "Fut", "Act")] = {("2", "Sing"): {"eto"}, ("3", "Sing"): {"eto"},
-                                       ("2", "Plur"): {"etote"}, ("3", "Plur"): {"ento"}}
-    out[(2, "Imp", "Fut", "Pass")] = {("2", "Sing"): {"etor"}, ("3", "Sing"): {"etor"}, ("3", "Plur"): {"entor"}}
-
-    # ---- Conjugation 3 (reg-, dic-) ----
-    add(3, "Ind", "Pres", "Act", ["o", "is", "it", "imus", "itis", "unt"])
-    add(3, "Ind", "Pres", "Pass", ["or", "eris", "itur", "imur", "imini", "untur"], {("2", "Sing"): "ere"})
-    add(3, "Ind", "Imp", "Act", ["ebam", "ebas", "ebat", "ebamus", "ebatis", "ebant"])
-    add(3, "Ind", "Imp", "Pass", ["ebar", "ebaris", "ebatur", "ebamur", "ebamini", "ebantur"], {("2", "Sing"): "ebare"})
-    add(3, "Ind", "Fut", "Act", ["am", "es", "et", "emus", "etis", "ent"])
-    add(3, "Ind", "Fut", "Pass", ["ar", "eris", "etur", "emur", "emini", "entur"], {("2", "Sing"): "ere"})
-    add(3, "Sub", "Pres", "Act", ["am", "as", "at", "amus", "atis", "ant"])
-    add(3, "Sub", "Pres", "Pass", ["ar", "aris", "atur", "amur", "amini", "antur"], {("2", "Sing"): "are"})
-    add(3, "Sub", "Imp", "Act", ["erem", "eres", "eret", "eremus", "eretis", "erent"])
-    add(3, "Sub", "Imp", "Pass", ["erer", "ereris", "eretur", "eremur", "eremini", "erentur"], {("2", "Sing"): "erere"})
-    out[(3, "Imp", "Pres", "Act")] = {("2", "Sing"): {"e"}, ("2", "Plur"): {"ite"}}
-    out[(3, "Imp", "Pres", "Pass")] = {("2", "Sing"): {"ere"}, ("2", "Plur"): {"imini"}}
-    out[(3, "Imp", "Fut", "Act")] = {("2", "Sing"): {"ito"}, ("3", "Sing"): {"ito"},
-                                       ("2", "Plur"): {"itote"}, ("3", "Plur"): {"unto"}}
-    out[(3, "Imp", "Fut", "Pass")] = {("2", "Sing"): {"itor"}, ("3", "Sing"): {"itor"}, ("3", "Plur"): {"untor"}}
-
-    # ---- Conjugation 4 (audi-) — pres stem already includes theme vowel `i` ----
-    add(4, "Ind", "Pres", "Act", ["o", "s", "t", "mus", "tis", "unt"])
-    add(4, "Ind", "Pres", "Pass", ["or", "ris", "tur", "mur", "mini", "untur"], {("2", "Sing"): "re"})
-    add(4, "Ind", "Imp", "Act", ["ebam", "ebas", "ebat", "ebamus", "ebatis", "ebant"])
-    add(4, "Ind", "Imp", "Pass", ["ebar", "ebaris", "ebatur", "ebamur", "ebamini", "ebantur"], {("2", "Sing"): "ebare"})
-    add(4, "Ind", "Fut", "Act", ["am", "es", "et", "emus", "etis", "ent"])
-    add(4, "Ind", "Fut", "Pass", ["ar", "eris", "etur", "emur", "emini", "entur"], {("2", "Sing"): "ere"})
-    add(4, "Sub", "Pres", "Act", ["am", "as", "at", "amus", "atis", "ant"])
-    add(4, "Sub", "Pres", "Pass", ["ar", "aris", "atur", "amur", "amini", "antur"], {("2", "Sing"): "are"})
-    add(4, "Sub", "Imp", "Act", ["rem", "res", "ret", "remus", "retis", "rent"])
-    add(4, "Sub", "Imp", "Pass", ["rer", "reris", "retur", "remur", "remini", "rentur"], {("2", "Sing"): "rere"})
-    out[(4, "Imp", "Pres", "Act")] = {("2", "Sing"): {""}, ("2", "Plur"): {"te"}}
-    out[(4, "Imp", "Pres", "Pass")] = {("2", "Sing"): {"re"}, ("2", "Plur"): {"mini"}}
-    out[(4, "Imp", "Fut", "Act")] = {("2", "Sing"): {"to"}, ("3", "Sing"): {"to"},
-                                       ("2", "Plur"): {"tote"}, ("3", "Plur"): {"unto"}}
-    out[(4, "Imp", "Fut", "Pass")] = {("2", "Sing"): {"tor"}, ("3", "Sing"): {"tor"}, ("3", "Plur"): {"untor"}}
-    return out
-
-
-_PRES_SYS_ENDINGS = _build_pres_sys_endings()
-_FUT_IND_PREFIX = {1: "ab", 2: "eb"}
-
-
-def _is_finite_alternate(
-    form: str,
-    mood: str,
-    tense: str,
-    conj: int | None,
-    pres_stem: str,
-    perf_stem: str,
-    person: str = "",
-    number: str = "",
-    voice: str = "",
-) -> bool:
-    """Return True if a finite form should be routed to alternates rather
-    than placed in its canonical paradigm cell. Catches Plautine sigmatic
-    forms (``amasso, amassi, amasseram, amassero``) and the library's
-    wrong-stem / wrong-conj artefacts (``reg``, ``audbam``, ``dicas``).
-
-    Conservative: when stems are unknown (irregular verb without detected
-    conj) we keep the form in-cell rather than risk false alternates.
-    """
-    if not perf_stem and not pres_stem:
-        return False
-    if tense in _PERF_SYS_TENSES:
-        return bool(perf_stem) and not form.startswith(perf_stem)
-    if conj and pres_stem and tense in {"Pres", "Imp", "Fut"}:
-        endings = _PRES_SYS_ENDINGS.get((conj, mood, tense, voice), {})
-        valid = endings.get((person, number)) if (person and number) else None
-        if valid is not None:
-            if not form.startswith(pres_stem):
-                return True
-            suffix = form[len(pres_stem):]
-            return suffix not in valid
-    if tense == "Fut" and mood == "Ind" and pres_stem and conj in _FUT_IND_PREFIX:
-        return not form.startswith(pres_stem + _FUT_IND_PREFIX[conj])
-    return False
-
-
-def _is_part_alternate(
-    form: str, tense: str, voice: str, conj: int | None,
-    pres_stem: str, sup_stem: str,
-) -> bool:
-    """Route participles built from the wrong stem to alternates. The
-    library lumps homonyms (dicere + dicare) into one paradigm, emitting
-    both ``dicens`` / ``dicans`` etc.; this filter keeps only the forms
-    consistent with the entry's principal parts.
-
-    Conservative: when the relevant stem is missing we keep the form.
-    """
-    if not (pres_stem or sup_stem):
-        return False
-    if voice == "Pass" and tense == "Past":
-        return bool(sup_stem) and not form.startswith(sup_stem)
-    if voice == "Act" and tense == "Fut":
-        return bool(sup_stem) and not form.startswith(sup_stem)
-    if not (conj and pres_stem and form.startswith(pres_stem)):
-        # Conservative: if we can't apply the conj-specific rule, keep it.
-        return False
-    after = form[len(pres_stem):]
-    if voice == "Act" and tense == "Pres":
-        if conj == 1:
-            return not after.startswith(("an", "ant"))
-        return not after.startswith(("en", "ient"))
-    if voice == "Pass" and tense == "Fut":
-        if conj == 1:
-            return not after.startswith("and")
-        if conj == 4:
-            return not after.startswith(("end", "iend"))
-        return not after.startswith(("end", "und"))
-    return False
-
-
-def _is_inf_alternate(form: str, tense: str, voice: str, perf_stem: str) -> bool:
-    """Route non-canonical infinitives to alternates.
-
-    Canonical Latin infinitive endings:
-      - Pres Act: ``-re`` (amare, monere, regere, audire)
-      - Pres Pass: ``-ri`` or bare ``-i`` (amari, moneri, regi, audiri)
-      - Perf Act: ``-isse`` and starting with the perfect stem (amavisse)
-
-    Catches archaic/poetic forms like ``amarier`` (Plautine Pres Pass)
-    and library artefacts like ``ame`` mistagged as a Pres Act inf.
-    """
-    if tense in _PERF_SYS_TENSES:
-        if perf_stem and not form.startswith(perf_stem):
-            return True
-        if voice == "Act" and not form.endswith("isse"):
-            return True
-        return False
-    if tense == "Pres":
-        if voice == "Act" and not form.endswith("re"):
-            return True
-        if voice == "Pass" and not (form.endswith("ri") or form.endswith("i")):
-            return True
-    return False
 
 
 _MOOD_LABEL = {"Ind": "Indicative", "Sub": "Subjunctive", "Imp": "Imperative"}

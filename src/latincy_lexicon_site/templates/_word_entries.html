@@ -32,8 +32,12 @@
         {% if entry.geo %}<span title="Whitaker code: {{ entry.geo }}"> · Geo: {{ entry.geo | ww_geo }}</span>{% endif %}
         {% if entry.source %}<span title="Whitaker code: {{ entry.source }}"> · Source: {{ entry.source | ww_source }}</span>{% endif %}
       </small></p>
-      {% if entry.lemma %}
-        <p><a href="/paradigm/{{ entry.lemma }}?pos={{ entry.pos or '' }}">View full paradigm →</a></p>
+      {% set para_lemma = entry.headword or entry.lemma %}
+      {% if para_lemma %}
+        {# paradigm ?pos= filters on UPOS (entry.ud_pos), not Whitaker's code #}
+        {% set ud = entry.ud_pos or [] %}
+        {% set para_pos = 'VERB' if 'VERB' in ud else (ud[0] if ud else '') %}
+        <p><a href="/paradigm/{{ para_lemma }}{% if para_pos %}?pos={{ para_pos }}{% endif %}">View full paradigm →</a></p>
       {% endif %}
       {% if flags_enabled %}
         <p>

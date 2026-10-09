@@ -5,7 +5,9 @@ from latincy_lexicon_site.paradigm_layout import layout_paradigm
 
 
 def _form(form, **feats):
-    return {"form": form, "upos": feats.pop("upos", "VERB"), "feats": feats}
+    alternate = feats.pop("alternate", False)
+    upos = feats.pop("upos", "VERB")
+    return {"form": form, "upos": upos, "feats": feats, "alternate": alternate}
 
 
 def test_empty_input_returns_empty_kind():
@@ -67,18 +69,17 @@ def test_adj_splits_by_degree():
     assert titles == ["Positive", "Comparative", "Superlative"]
 
 
-def test_verb_reclassifies_future_perfect_using_perfect_stem():
+def test_verb_reclassifies_future_perfect_by_aspect():
     """The library tags both ``amabo`` (Future) and ``amavero`` (Future
-    Perfect) as Tense=Fut. When an entry is supplied, FutP forms should
-    be split out into their own row by perfect-stem prefix."""
+    Perfect) as Tense=Fut, distinguishing them with Aspect=Perf on the
+    future perfect. The layout maps Tense=Fut|Aspect=Perf to its FutP row."""
     forms = [
         _form("amabo", VerbForm="Fin", Mood="Ind", Tense="Fut",
               Voice="Act", Person="1", Number="Sing"),
         _form("amavero", VerbForm="Fin", Mood="Ind", Tense="Fut",
-              Voice="Act", Person="1", Number="Sing"),
+              Aspect="Perf", Voice="Act", Person="1", Number="Sing"),
     ]
-    entry = {"headword": "amo", "principal_parts": ["am", "am", "amass"]}
-    out = layout_paradigm(forms, "VERB", entry)
+    out = layout_paradigm(forms, "VERB")
     ind = next(b for b in out["blocks"] if b["title"] == "Indicative")
     tenses = {r["tense"] for r in ind["rows"]}
     assert "Fut" in tenses and "FutP" in tenses
@@ -90,22 +91,22 @@ def test_verb_reclassifies_future_perfect_using_perfect_stem():
     assert "amavero" in futp_cells and "amavero" not in fut_cells
 
 
-def test_verb_routes_plautine_sigmatic_to_alternates():
-    """Plautine ``amasso`` shares features with canonical ``amabo`` but
-    uses a non-canonical stem; without entry stems we'd put both in the
-    Future cell. With entry supplied, ``amasso`` moves to alternates."""
+def test_verb_routes_flagged_forms_to_alternates():
+    """Non-canonical forms arrive flagged ``alternate`` by the library
+    (Plautine ``amasso``/``amassi`` off the syncopated stem). The layout
+    routes any flagged form to alternates and keeps the canonical ones in
+    their cells."""
     forms = [
         _form("amabo", VerbForm="Fin", Mood="Ind", Tense="Fut",
               Voice="Act", Person="1", Number="Sing"),
         _form("amasso", VerbForm="Fin", Mood="Ind", Tense="Fut",
-              Voice="Act", Person="1", Number="Sing"),
+              Voice="Act", Person="1", Number="Sing", alternate=True),
         _form("amavi", VerbForm="Fin", Mood="Ind", Tense="Past",
               Voice="Act", Person="1", Number="Sing"),
         _form("amassi", VerbForm="Fin", Mood="Ind", Tense="Past",
-              Voice="Act", Person="1", Number="Sing"),
+              Voice="Act", Person="1", Number="Sing", alternate=True),
     ]
-    entry = {"headword": "amo", "principal_parts": ["am", "am", "amass"]}
-    out = layout_paradigm(forms, "VERB", entry)
+    out = layout_paradigm(forms, "VERB")
     alt_forms = {a["form"] for a in out["alternates"]}
     assert "amasso" in alt_forms and "amassi" in alt_forms
     ind = next(b for b in out["blocks"] if b["title"] == "Indicative")
@@ -115,17 +116,16 @@ def test_verb_routes_plautine_sigmatic_to_alternates():
 
 
 def test_verb_keeps_irregular_future_in_cell():
-    """``sum``'s canonical Future 1sg is ``ero`` — same ending as the
-    Future Perfect rule keys on. The perfect-stem guard must keep it in
-    the Future row, not promote it to Future Perfect."""
+    """``sum``'s canonical Future 1sg is ``ero`` (Tense=Fut, no Aspect) —
+    it stays in the Future row, while ``fuero`` (Aspect=Perf) is the Future
+    Perfect. Aspect, not the ending, drives the split."""
     forms = [
         _form("ero", VerbForm="Fin", Mood="Ind", Tense="Fut",
               Voice="Act", Person="1", Number="Sing"),
         _form("fuero", VerbForm="Fin", Mood="Ind", Tense="Fut",
-              Voice="Act", Person="1", Number="Sing"),
+              Aspect="Perf", Voice="Act", Person="1", Number="Sing"),
     ]
-    entry = {"headword": "sum", "principal_parts": ["s", "fu", "fut"]}
-    out = layout_paradigm(forms, "VERB", entry)
+    out = layout_paradigm(forms, "VERB")
     ind = next(b for b in out["blocks"] if b["title"] == "Indicative")
     fut_row = next(r for r in ind["rows"] if r["tense"] == "Fut")
     futp_row = next(r for r in ind["rows"] if r["tense"] == "FutP")
@@ -151,24 +151,24 @@ def test_verb_layout_is_nooperatively_safe_without_entry():
     assert "amasso" in fut_cells and "amabo" in fut_cells
 
 
-def _inf(form, voice="Act", tense="Pres"):
-    return {"form": form, "upos": "VERB", "feats": {
+def _inf(form, voice="Act", tense="Pres", alternate=False):
+    return {"form": form, "upos": "VERB", "alternate": alternate, "feats": {
         "VerbForm": "Inf", "Tense": tense, "Voice": voice}}
 
 
 def test_verb_routes_archaic_and_bogus_infinitives_to_alternates():
-    """Archaic ``amarier`` and library-bogus ``ame`` should not appear
-    in the canonical Present Passive / Active infinitive cells."""
+    """Non-canonical infinitives arrive flagged by the library (archaic
+    ``amarier``, bogus ``ame``, syncopated ``amasse``); the layout keeps
+    only the canonical ones in the infinitive cells."""
     forms = [
         _inf("amare", "Act"),     # canonical
-        _inf("ame", "Act"),       # bogus — must end in -re
+        _inf("ame", "Act", alternate=True),       # bogus
         _inf("amari", "Pass"),    # canonical
-        _inf("amarier", "Pass"),  # archaic — must end in -ri or -i
+        _inf("amarier", "Pass", alternate=True),  # archaic
         _inf("amavisse", "Act", tense="Past"),  # canonical perfect
-        _inf("amasse", "Act", tense="Past"),    # syncopated/Plautine
+        _inf("amasse", "Act", tense="Past", alternate=True),  # syncopated
     ]
-    entry = {"headword": "amo", "principal_parts": ["am", "am", "amass"]}
-    out = layout_paradigm(forms, "VERB", entry)
+    out = layout_paradigm(forms, "VERB")
     inf_block = next(b for b in out["blocks"] if b["title"] == "Infinitives")
     rows_by_label = {r["label"]: r["forms"] for r in inf_block["rows"]}
     assert rows_by_label.get("Present Active") == ["amare"]
@@ -180,10 +180,10 @@ def test_verb_routes_archaic_and_bogus_infinitives_to_alternates():
     assert "amasse" in alt_forms
 
 
-def _ppp_form(form, **feats):
+def _ppp_form(form, alternate=False, **feats):
     feats = {**feats, "VerbForm": "Part", "Tense": "Past", "Voice": "Pass",
              "Aspect": "Perf"}
-    return {"form": form, "upos": "VERB", "feats": feats}
+    return {"form": form, "upos": "VERB", "alternate": alternate, "feats": feats}
 
 
 def test_verb_synthesizes_periphrastic_perfect_passive():
@@ -229,50 +229,44 @@ def test_verb_periphrastic_synthesis_does_not_introduce_phantom_row():
     assert "Pst" not in tenses
 
 
-def test_verb_filters_wrong_conj_present_system_forms():
-    """The library can lump a 1st-conj homonym's forms into a 3rd-conj
-    headword's paradigm (e.g. dico = dicere AND dicare). For a 3rd-conj
-    entry, ``dicas`` (1st-conj Pres Ind Act 2sg) must NOT appear in the
-    Pres Ind Act 2sg cell — only ``dicis`` (the canonical 3rd-conj form)
-    belongs there. Bare-stem ``reg`` and wrong-stem ``audbam`` get
-    filtered the same way."""
+def test_verb_routes_flagged_present_system_artefact_to_alternates():
+    """Wrong-stem/wrong-conj present artefacts (e.g. audio's ``audbam``)
+    arrive flagged by the library; a flagged finite present form is routed
+    to alternates while the canonical cell form stays."""
     forms = [
-        _form("dico", VerbForm="Fin", Mood="Ind", Tense="Pres",
+        _form("audiebam", VerbForm="Fin", Mood="Ind", Tense="Imp",
               Voice="Act", Person="1", Number="Sing"),
-        _form("dicis", VerbForm="Fin", Mood="Ind", Tense="Pres",
-              Voice="Act", Person="2", Number="Sing"),
-        _form("dicas", VerbForm="Fin", Mood="Ind", Tense="Pres",
-              Voice="Act", Person="2", Number="Sing"),  # 1st-conj intruder
+        _form("audbam", VerbForm="Fin", Mood="Ind", Tense="Imp",
+              Voice="Act", Person="1", Number="Sing", alternate=True),
     ]
-    entry = {"headword": "dico", "principal_parts": ["dic", "dic", "dix", "dict"]}
-    out = layout_paradigm(forms, "VERB", entry)
+    out = layout_paradigm(forms, "VERB")
     ind = next(b for b in out["blocks"] if b["title"] == "Indicative")
-    pres = next(r for r in ind["rows"] if r["tense"] == "Pres")
-    cells = [x for grid in pres["voices"].values() for sub in grid for c in sub for x in c]
-    assert "dicis" in cells and "dicas" not in cells
-    assert "dicas" in {a["form"] for a in out["alternates"]}
+    imp = next(r for r in ind["rows"] if r["tense"] == "Imp")
+    cells = [x for grid in imp["voices"].values() for sub in grid for c in sub for x in c]
+    assert "audiebam" in cells and "audbam" not in cells
+    assert "audbam" in {a["form"] for a in out["alternates"]}
 
 
-def test_verb_filters_wrong_stem_participles():
-    """Same homonym problem for participles: a 3rd-conj entry must not
-    pick up 1st-conj ``dicans`` (Pres Act), ``dicaturus`` (Fut Act),
-    ``dicandus`` (gerundive), or ``dicatus`` (PPP)."""
+def test_verb_routes_flagged_participles_to_alternates():
+    """Wrong-stem participles arrive flagged by the library; the layout
+    routes the flagged ones (``dicans``, ``dicatus``) to alternates and
+    keeps the canonical ones (``dicens``, ``dictus``) in the participle
+    blocks."""
     forms = [
-        {"form": "dicens", "upos": "VERB", "feats": {
+        {"form": "dicens", "upos": "VERB", "alternate": False, "feats": {
             "VerbForm": "Part", "Tense": "Pres", "Voice": "Act",
             "Case": "Nom", "Number": "Sing", "Gender": "Masc"}},
-        {"form": "dicans", "upos": "VERB", "feats": {
+        {"form": "dicans", "upos": "VERB", "alternate": True, "feats": {
             "VerbForm": "Part", "Tense": "Pres", "Voice": "Act",
             "Case": "Nom", "Number": "Sing", "Gender": "Masc"}},
-        {"form": "dictus", "upos": "VERB", "feats": {
+        {"form": "dictus", "upos": "VERB", "alternate": False, "feats": {
             "VerbForm": "Part", "Tense": "Past", "Voice": "Pass",
             "Case": "Nom", "Number": "Sing", "Gender": "Masc"}},
-        {"form": "dicatus", "upos": "VERB", "feats": {
+        {"form": "dicatus", "upos": "VERB", "alternate": True, "feats": {
             "VerbForm": "Part", "Tense": "Past", "Voice": "Pass",
             "Case": "Nom", "Number": "Sing", "Gender": "Masc"}},
     ]
-    entry = {"headword": "dico", "principal_parts": ["dic", "dic", "dix", "dict"]}
-    out = layout_paradigm(forms, "VERB", entry)
+    out = layout_paradigm(forms, "VERB")
     alt_forms = {a["form"] for a in out["alternates"]}
     assert "dicans" in alt_forms and "dicatus" in alt_forms
     # The kept participles render in their own decl blocks
@@ -283,21 +277,19 @@ def test_verb_filters_wrong_stem_participles():
 
 
 def test_verb_drops_spurious_perfect_passive_participle_for_irregular():
-    """Library generates a Perfect Passive participle for sum
-    (``futus, futa, futum``) by mechanically declining the supine stem,
-    even though Latin's sum has no such participle. The 3-stem layout
-    [pres, perf, sup] flags the verb as having no real PPP, and those
-    forms get routed to alternates."""
+    """The library flags sum's mechanically-declined fake PPP
+    (``futus, futa, futum``) as alternate while keeping the real future
+    active participle (``futurus``). The layout routes the flagged PPP to
+    alternates, so no Perfect Passive participle block appears."""
     forms = [
         _form("sum", VerbForm="Fin", Mood="Ind", Tense="Pres",
               Voice="Act", Person="1", Number="Sing"),
-        _ppp_form("futus", Case="Nom", Number="Sing", Gender="Masc"),
-        {"form": "futurus", "upos": "VERB",
+        _ppp_form("futus", alternate=True, Case="Nom", Number="Sing", Gender="Masc"),
+        {"form": "futurus", "upos": "VERB", "alternate": False,
          "feats": {"VerbForm": "Part", "Tense": "Fut", "Voice": "Act",
                    "Case": "Nom", "Number": "Sing", "Gender": "Masc"}},
     ]
-    entry = {"headword": "sum", "principal_parts": ["s", "fu", "fut"]}
-    out = layout_paradigm(forms, "VERB", entry)
+    out = layout_paradigm(forms, "VERB")
     titles = [r["label"] for b in out["blocks"] if b["kind"] == "participles"
               for r in b["rows"]]
     assert "Future Active" in titles

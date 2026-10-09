@@ -27,6 +27,7 @@ def monkeypatch_session():
 @pytest.fixture(scope="session")
 def client(tmp_path_factory, monkeypatch_session) -> TestClient:
     """Test client with lifespan wired to la_core_web_sm + tmp cache."""
+    monkeypatch_session.setenv("LATINCY_SITE_REQUIRE_AUTH", "0")
     monkeypatch_session.setenv("LATINCY_SITE_MODEL", "la_core_web_sm")
     monkeypatch_session.setenv(
         "LATINCY_SITE_CACHE_PATH",

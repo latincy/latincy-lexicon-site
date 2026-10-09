@@ -8,6 +8,7 @@ from pathlib import Path
 from fastapi.templating import Jinja2Templates
 
 from . import __version__
+from .auth import auth_required
 from .paradigm_layout import layout_paradigm
 from .pos_labels import pos_label, upos_label
 from latincy_lexicon import format_principal_parts
@@ -27,3 +28,4 @@ templates.env.filters["upos_label"] = upos_label
 templates.env.globals["layout_paradigm"] = layout_paradigm
 templates.env.globals["site_version"] = __version__
 templates.env.globals["lexicon_version"] = pkg_version("latincy-lexicon")
+templates.env.globals["auth_required"] = auth_required
