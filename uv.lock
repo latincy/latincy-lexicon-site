@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.12"
 
 [[package]]
@@ -382,41 +382,41 @@ wheels = [
 
 [[package]]
 name = "la-core-web-lg"
-version = "3.9.4"
-source = { url = "https://huggingface.co/latincy/la_core_web_lg/resolve/main/la_core_web_lg-3.9.4-py3-none-any.whl" }
+version = "3.9.8"
+source = { url = "https://huggingface.co/latincy/la_core_web_lg/resolve/main/la_core_web_lg-3.9.8-py3-none-any.whl" }
 dependencies = [
     { name = "la-latincy-lookups" },
     { name = "latincy-preprocess" },
     { name = "spacy" },
 ]
 wheels = [
-    { url = "https://huggingface.co/latincy/la_core_web_lg/resolve/main/la_core_web_lg-3.9.4-py3-none-any.whl", hash = "sha256:2a212caaf7a819796e68404492777da12e4bddf0f60decdfdefc203e08d943b1" },
+    { url = "https://huggingface.co/latincy/la_core_web_lg/resolve/main/la_core_web_lg-3.9.8-py3-none-any.whl", hash = "sha256:5b5ca107fd74f5d5abc5269aa3a9710a93c69ff31109c89a5d7ac289f9ddfe72" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "la-latincy-lookups", specifier = ">=1.0.0" },
-    { name = "latincy-preprocess", specifier = ">=0.2.0,<0.3.0" },
+    { name = "la-latincy-lookups", specifier = ">=1.0.0,<1.1.0" },
+    { name = "latincy-preprocess", specifier = ">=0.2.0,<0.6.0" },
     { name = "spacy", specifier = ">=3.8.11,<3.9.0" },
 ]
 
 [[package]]
 name = "la-core-web-sm"
-version = "3.9.4"
-source = { url = "https://huggingface.co/latincy/la_core_web_sm/resolve/main/la_core_web_sm-3.9.4-py3-none-any.whl" }
+version = "3.9.8"
+source = { url = "https://huggingface.co/latincy/la_core_web_sm/resolve/main/la_core_web_sm-3.9.8-py3-none-any.whl" }
 dependencies = [
     { name = "la-latincy-lookups" },
     { name = "latincy-preprocess" },
     { name = "spacy" },
 ]
 wheels = [
-    { url = "https://huggingface.co/latincy/la_core_web_sm/resolve/main/la_core_web_sm-3.9.4-py3-none-any.whl", hash = "sha256:a688e6bce13c9b23f77c7eb37d2059f3f4080eb9bba707672d09960484b2a578" },
+    { url = "https://huggingface.co/latincy/la_core_web_sm/resolve/main/la_core_web_sm-3.9.8-py3-none-any.whl", hash = "sha256:32c981b04ac18e567445362d092b6bbce6b715a40d1686975502c727c867c39b" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "la-latincy-lookups", specifier = ">=1.0.0" },
-    { name = "latincy-preprocess", specifier = ">=0.2.0,<0.3.0" },
+    { name = "la-latincy-lookups", specifier = ">=1.0.0,<1.1.0" },
+    { name = "latincy-preprocess", specifier = ">=0.2.0,<0.6.0" },
     { name = "spacy", specifier = ">=3.8.11,<3.9.0" },
 ]
 
@@ -434,16 +434,16 @@ wheels = [
 
 [[package]]
 name = "latincy-lexicon"
-version = "0.5.0"
+version = "0.13.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/46/e4/50f7c4a8029144a8e22a6c6f346f7dfb965f8a7b31e68aaa754c84bc2278/latincy_lexicon-0.5.0.tar.gz", hash = "sha256:1a1130b4e26abea20d3e7ae19240336969c5706ec10c55d80966d1dd935ddb84", size = 1405581, upload-time = "2026-06-26T11:45:39.307Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/9f/2f/ff5bbf8cb33d31d25b8da2a8a1ca26b7d93689011b407f17fbc39bcb280a/latincy_lexicon-0.13.0.tar.gz", hash = "sha256:93928c2637d28cc442f24991470766542956e1929111cc10eea79aeaf0397aaf", size = 19118727, upload-time = "2026-10-05T17:50:52.498Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3e/48/3924c0b4af81faff2ab845d2ed93964f92381633d5dbcce55aa0cd6c5eec/latincy_lexicon-0.5.0-py3-none-any.whl", hash = "sha256:9530f6a3c374ce97c8b5d37459e52233a155d3d2eab510be1967f1038b01fa43", size = 1283046, upload-time = "2026-06-26T11:45:37.354Z" },
+    { url = "https://files.pythonhosted.org/packages/4a/cf/5a77cbe4585bebe9fc4aa9b46c90d2c38a2f60c7167aa05fcfb4ac962d67/latincy_lexicon-0.13.0-py3-none-any.whl", hash = "sha256:962be222c37893e8c8ada5581e0fb7ed1c96ade5d04eaeabbd044374945c7938", size = 18964677, upload-time = "2026-10-05T17:50:50.098Z" },
 ]
 
 [[package]]
 name = "latincy-lexicon-site"
-version = "0.1.19"
+version = "0.1.20"
 source = { editable = "." }
 dependencies = [
     { name = "fastapi" },
@@ -479,9 +479,9 @@ requires-dist = [
     { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.27" },
     { name = "itsdangerous", specifier = ">=2.0" },
     { name = "jinja2", specifier = ">=3.1" },
-    { name = "la-core-web-lg", marker = "extra == 'models'", url = "https://huggingface.co/latincy/la_core_web_lg/resolve/main/la_core_web_lg-3.9.4-py3-none-any.whl" },
-    { name = "la-core-web-sm", marker = "extra == 'test-models'", url = "https://huggingface.co/latincy/la_core_web_sm/resolve/main/la_core_web_sm-3.9.4-py3-none-any.whl" },
-    { name = "latincy-lexicon", specifier = ">=0.5.0" },
+    { name = "la-core-web-lg", marker = "extra == 'models'", url = "https://huggingface.co/latincy/la_core_web_lg/resolve/main/la_core_web_lg-3.9.8-py3-none-any.whl" },
+    { name = "la-core-web-sm", marker = "extra == 'test-models'", url = "https://huggingface.co/latincy/la_core_web_sm/resolve/main/la_core_web_sm-3.9.8-py3-none-any.whl" },
+    { name = "latincy-lexicon", specifier = ">=0.13.0" },
     { name = "passlib", extras = ["apache"], specifier = ">=1.7" },
     { name = "pydantic", specifier = ">=2.8" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3" },
