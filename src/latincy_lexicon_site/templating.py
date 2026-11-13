@@ -6,12 +6,12 @@ from importlib.metadata import version as pkg_version
 from pathlib import Path
 
 from fastapi.templating import Jinja2Templates
+from latincy_lexicon import format_principal_parts
 
 from . import __version__
 from .auth import auth_required
 from .paradigm_layout import layout_paradigm
 from .pos_labels import pos_label, upos_label
-from latincy_lexicon import format_principal_parts
 from .ww_codes import ww_age, ww_area, ww_freq, ww_geo, ww_source
 
 TEMPLATES_DIR = Path(__file__).parent / "templates"
